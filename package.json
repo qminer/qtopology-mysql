@@ -4,7 +4,7 @@
   "description": "MySQL-based coordination storage for QTopology",
   "main": "built/mysql_coordinator.js",
   "typings": "./built/mysql_coordinator",
-  "repository": "https://github.com/qminer/qtopology.git",
+  "repository": "https://github.com/qminer/qtopology-mysql.git",
   "keywords": [
     "node.js"
   ],
