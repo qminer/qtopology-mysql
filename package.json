@@ -1,0 +1,35 @@
+{
+  "name": "qtopology-mysql",
+  "version": "0.1.0",
+  "description": "MySQL-based coordination storage for QTopology",
+  "main": "built/mysql_coordinator.js",
+  "typings": "./built/mysql_coordinator",
+  "repository": "https://github.com/qminer/qtopology.git",
+  "keywords": [
+    "node.js"
+  ],
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Viktor Jovanoski",
+  "contributors": [
+    {
+      "name": "Viktor Jovanoski",
+      "email": "viktor@carvic.si"
+    }
+  ],
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "7.0.12",
+    "@types/mysql": "0.0.33",
+    "@types/async": "2.0.40",
+    "@types/glob": "5.0.30",
+    "mocha": "^3.2.0"
+  },
+  "dependencies": {
+    "async": "^2.4.1",
+    "glob": "^7.1.2",
+    "mysql": "^2.13.0",
+    "qtopology": "0.10.x"
+  }
+}
