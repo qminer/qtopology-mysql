@@ -1,6 +1,6 @@
 "use strict";
 const async = require("async");
-const coor = require("../built/mysql_coordinator");
+const coor = require("../");
 
 let coordinator = new coor.MySqlCoordinator({
     host: "localhost",
