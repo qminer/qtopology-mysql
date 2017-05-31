@@ -1,5 +1,6 @@
 "use strict";
 const async = require("async");
+const fs = require("fs");
 const coor = require("../");
 
 let coordinator = new coor.MySqlCoordinator({
@@ -11,7 +12,9 @@ let coordinator = new coor.MySqlCoordinator({
 });
 
 const worker_name = "worker1";
+let topology_config = JSON.parse(fs.readFileSync("./topology.json", "utf8"));
 const uuid = "the.test.topology";
+topology_config.general.uuid = uuid;
 
 async.series(
     [
@@ -42,7 +45,7 @@ async.series(
         },
         (xcallback) => {
             console.log("Registering topology");
-            coordinator.registerTopology({ general: { uuid: uuid } }, true, (err, data) => {
+            coordinator.registerTopology(topology_config, true, (err, data) => {
                 xcallback();
             });
         },
