@@ -3,6 +3,11 @@
   "version": "0.1.0",
   "description": "MySQL-based coordination storage for QTopology",
   "main": "built/mysql_coordinator.js",
+  "typings": "./built/mysql_coordinator",
+  "repository": "https://github.com/qminer/qtopology.git",
+  "keywords": [
+    "node.js"
+  ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
