@@ -6,6 +6,34 @@ This package contains coordination-storage plugin for [QTopology](http://github.
 
 NPM package: [https://www.npmjs.com/package/qtopology-mysql](https://www.npmjs.com/package/qtopology-mysql)
 
+## Installation
+
+`````````````bash
+npm install qtopology-mysql
+`````````````
+
+### Initialization
+
+The database doesn't need to be prepared in advance. All the objects will be created automatically, using the scripts in the `db` directory:
+
+- **init.sql** - create initial database state that will be used to upgrade schema to latest version.
+- **reset.sql** - resets database schema to the initial state. Removes all data, tables and stored procedures.
+- **clear.sql** - just erases all data, but leaves schema in tact. Should be used on the latest schema.
+- **vX.sql** - version upgrades.
+
+Each time the coordinator is instantiated, it first peforms database initialization by executing these steps:
+
+```````````````
+run init.js
+fetch version from database
+detect version-upgrade files that need to be run
+for each upgrade file
+    run file
+    update version
+```````````````
+
+If database schema is already at the latest version, then nothing happens.
+
 ## Database schema
 
 ### Tables
@@ -42,24 +70,3 @@ NPM package: [https://www.npmjs.com/package/qtopology-mysql](https://www.npmjs.c
 | qtopology_sp_worker_statuses | Counts how many workers are in certain leadership status. |
 | qtopology_sp_workers | Lists all workers with their statuses and other data |
 
-### Initialization
-
-The database doesn't need to be prepared in advance. All the objects will be created automatically, using the scripts in the `db` directory:
-
-- **init.sql** - create initial database state that will be used to upgrade schema to latest version.
-- **reset.sql** - resets database schema to the initial state. Removes all data, tables and stored procedures.
-- **clear.sql** - just erases all data, but leaves schema in tact. Should be used on the latest schema.
-- **vX.sql** - version upgrades.
-
-Each time the coordinator is instantiated, it first peforms database initialization by executing these steps:
-
-```````````````
-run init.js
-fetch version from database
-detect version-upgrade files that need to be run
-for each upgrade file
-    run file
-    update version
-```````````````
-
-If database schema is already at the latest version, then nothing happens.
