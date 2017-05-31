@@ -2,6 +2,10 @@
 
 This package contains coordination-storage plugin for [QTopology](http://github.com/qminerqtopology) that uses `MySQL` database to store and manipulate coordination data.
 
+![npm version](https://badge.fury.io/js/qtopology-mysql.svg "NPM version")
+
+NPM package: [https://www.npmjs.com/package/qtopology-mysql](https://www.npmjs.com/package/qtopology-mysql)
+
 ## Database schema
 
 ### Tables
@@ -58,5 +62,4 @@ for each upgrade file
     update version
 ```````````````
 
-If databaswe schema is already at the latest version, then nothing happens.
-
+If database schema is already at the latest version, then nothing happens.
