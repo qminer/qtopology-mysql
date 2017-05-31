@@ -14,6 +14,7 @@ export declare class MySqlCoordinator implements qtopology.CoordinationStorage {
     constructor(options: MySqlCoordinatorParams);
     init(callback: qtopology.SimpleCallback): void;
     close(callback: qtopology.SimpleCallback): void;
+    private log(s);
     private query(sql, obj, callback);
     getMessages(name: string, callback: qtopology.SimpleResultCallback<qtopology.StorageResultMessage[]>): void;
     getWorkerStatus(callback: qtopology.SimpleResultCallback<qtopology.LeadershipResultWorkerStatus[]>): void;

@@ -4,6 +4,7 @@ const port_default = 3306;
 const mysql = require("mysql");
 const async = require("async");
 const path = require("path");
+const qtopology = require("qtopology");
 const dbu = require("./db_updater");
 //////////////////////////////////////////////////////////////////////
 // Storage-coordination implementation for MySQL
@@ -41,8 +42,12 @@ class MySqlCoordinator {
             callback();
         }
     }
+    log(s) {
+        qtopology.logger().debug("[MySqlCoordinator] " + s);
+    }
     query(sql, obj, callback) {
         try {
+            this.log(`${sql} ${obj}`);
             this.pool.query(sql, obj || [], callback);
         }
         catch (e) {
@@ -175,8 +180,8 @@ class MySqlCoordinator {
         this.query(sql, [uuid, name], callback);
     }
     setTopologyStatus(uuid, status, error, callback) {
-        let sql = "CALL qtopology_sp_update_topology_status(?, ?);";
-        this.query(sql, [uuid, status], callback);
+        let sql = "CALL qtopology_sp_update_topology_status(?, ?, ?);";
+        this.query(sql, [uuid, status, error], callback);
     }
     setWorkerStatus(name, status, callback) {
         let sql = "CALL qtopology_sp_update_worker_status(?, ?);";
