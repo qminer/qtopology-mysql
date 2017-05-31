@@ -1,0 +1,25 @@
+drop procedure if exists qtopology_sp_register_worker;
+drop procedure if exists qtopology_sp_disable_defunct_leaders;
+drop procedure if exists qtopology_sp_disable_defunct_workers;
+drop procedure if exists qtopology_sp_unassign_waiting_topologies;
+drop procedure if exists qtopology_sp_announce_leader_candidacy;
+drop procedure if exists qtopology_sp_check_leader_candidacy;
+drop procedure if exists qtopology_sp_assign_topology;
+drop procedure if exists qtopology_sp_update_topology_status;
+drop procedure if exists qtopology_sp_update_worker_status;
+drop procedure if exists qtopology_sp_worker_statuses;
+drop procedure if exists qtopology_sp_messages_for_worker;
+drop procedure if exists qtopology_sp_delete_message;
+drop procedure if exists qtopology_sp_workers;
+drop procedure if exists qtopology_sp_topologies;
+drop procedure if exists qtopology_sp_topologies_for_worker;
+drop procedure if exists qtopology_sp_disable_topology;
+drop procedure if exists qtopology_sp_enable_topology;
+drop procedure if exists qtopology_sp_register_topology;
+drop procedure if exists qtopology_sp_delete_topology;
+drop procedure if exists qtopology_sp_refresh_statuses;
+
+drop table if exists qtopology_worker;
+drop table if exists qtopology_topology;
+drop table if exists qtopology_message;
+drop table if exists qtopology_settings;
