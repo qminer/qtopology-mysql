@@ -63,8 +63,13 @@ export class MySqlCoordinator implements qtopology.CoordinationStorage {
         }
     }
 
+    private log(s) {
+        qtopology.logger().debug("[MySqlCoordinator] " + s);
+    }
+
     private query(sql: string, obj: any, callback: qtopology.SimpleResultCallback<any>) {
         try {
+            this.log(`${sql} ${obj}`);
             this.pool.query(sql, obj || [], callback);
         } catch (e) {
             callback(e);
@@ -192,15 +197,15 @@ export class MySqlCoordinator implements qtopology.CoordinationStorage {
         this.query(sql, [uuid, name], callback);
     }
     setTopologyStatus(uuid: string, status: string, error: string, callback: qtopology.SimpleCallback) {
-        let sql = "CALL qtopology_sp_update_topology_status(?, ?);";
-        this.query(sql, [uuid, status], callback);
+        let sql = "CALL qtopology_sp_update_topology_status(?, ?, ?);";
+        this.query(sql, [uuid, status, error], callback);
     }
     setWorkerStatus(name: string, status: string, callback: qtopology.SimpleCallback) {
         let sql = "CALL qtopology_sp_update_worker_status(?, ?);";
         this.query(sql, [name, status], callback);
     }
 
-    registerTopology(config: any, overwrite: boolean, callback: qtopology.SimpleCallback) {
+    registerTopology(uuid: string, config: any, callback: qtopology.SimpleCallback) {
         let sql = "CALL qtopology_sp_register_topology(?, ?, ?, ?);";
         let affinity = "";
         if (config.general.worker_affinity) {
@@ -209,7 +214,7 @@ export class MySqlCoordinator implements qtopology.CoordinationStorage {
         let weight = config.general.weight || 1;
         this.query(
             sql,
-            [config.general.uuid, JSON.stringify(config), weight, affinity],
+            [uuid, JSON.stringify(config), weight, affinity],
             callback);
     }
     disableTopology(uuid: string, callback: qtopology.SimpleCallback) {

@@ -14,6 +14,7 @@ export declare class MySqlCoordinator implements qtopology.CoordinationStorage {
     constructor(options: MySqlCoordinatorParams);
     init(callback: qtopology.SimpleCallback): void;
     close(callback: qtopology.SimpleCallback): void;
+    private log(s);
     private query(sql, obj, callback);
     getMessages(name: string, callback: qtopology.SimpleResultCallback<qtopology.StorageResultMessage[]>): void;
     getWorkerStatus(callback: qtopology.SimpleResultCallback<qtopology.LeadershipResultWorkerStatus[]>): void;
@@ -27,7 +28,7 @@ export declare class MySqlCoordinator implements qtopology.CoordinationStorage {
     assignTopology(uuid: string, name: string, callback: qtopology.SimpleCallback): void;
     setTopologyStatus(uuid: string, status: string, error: string, callback: qtopology.SimpleCallback): void;
     setWorkerStatus(name: string, status: string, callback: qtopology.SimpleCallback): void;
-    registerTopology(config: any, overwrite: boolean, callback: qtopology.SimpleCallback): void;
+    registerTopology(uuid: string, config: any, callback: qtopology.SimpleCallback): void;
     disableTopology(uuid: string, callback: qtopology.SimpleCallback): void;
     enableTopology(uuid: string, callback: qtopology.SimpleCallback): void;
     deleteTopology(uuid: string, callback: qtopology.SimpleCallback): void;

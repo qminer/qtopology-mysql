@@ -1,0 +1,30 @@
+{
+    "general": {
+        "name": "Demo of std nodes",
+        "heartbeat": 1000
+    },
+    "spouts": [
+        {
+            "name": "pump1",
+            "type": "sys",
+            "working_dir": "",
+            "cmd": "timer",
+            "init": {}
+        }
+    ],
+    "bolts": [
+        {
+            "name": "bolt1",
+            "working_dir": ".",
+            "type": "sys",
+            "cmd": "console",
+            "inputs": [
+                {
+                    "source": "pump1"
+                }
+            ],
+            "init": {}
+        }
+    ],
+    "variables": {}
+}

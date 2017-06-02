@@ -18,7 +18,7 @@ export interface SimpleResultCallback<T> {
     (error?: Error, data?: T): void;
 }
 
-interface Connection {
+export interface Connection {
     query(script: string, callback: SimpleResultCallback<any[]>);
 }
 
