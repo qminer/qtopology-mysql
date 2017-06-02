@@ -1,6 +1,6 @@
 "use strict";
 const coor = require("../");
-const qtopology = require("../../qtopology");
+const qtopology = require("qtopology");
 
 qtopology.logger().setLevel("normal");
 
@@ -13,4 +13,8 @@ let coordinator = new coor.MySqlCoordinator({
 });
 
 let cmd = new qtopology.CommandLineHandler(coordinator);
-cmd.run();
+cmd.run(() => {
+    coordinator.close(() => {
+        qtopology.logger().log("Done.");
+     })
+});
