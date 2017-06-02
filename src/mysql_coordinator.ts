@@ -205,7 +205,7 @@ export class MySqlCoordinator implements qtopology.CoordinationStorage {
         this.query(sql, [name, status], callback);
     }
 
-    registerTopology(config: any, overwrite: boolean, callback: qtopology.SimpleCallback) {
+    registerTopology(uuid: string, config: any, callback: qtopology.SimpleCallback) {
         let sql = "CALL qtopology_sp_register_topology(?, ?, ?, ?);";
         let affinity = "";
         if (config.general.worker_affinity) {
@@ -214,7 +214,7 @@ export class MySqlCoordinator implements qtopology.CoordinationStorage {
         let weight = config.general.weight || 1;
         this.query(
             sql,
-            [config.general.uuid, JSON.stringify(config), weight, affinity],
+            [uuid, JSON.stringify(config), weight, affinity],
             callback);
     }
     disableTopology(uuid: string, callback: qtopology.SimpleCallback) {

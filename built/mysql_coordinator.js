@@ -187,14 +187,14 @@ class MySqlCoordinator {
         let sql = "CALL qtopology_sp_update_worker_status(?, ?);";
         this.query(sql, [name, status], callback);
     }
-    registerTopology(config, overwrite, callback) {
+    registerTopology(uuid, config, callback) {
         let sql = "CALL qtopology_sp_register_topology(?, ?, ?, ?);";
         let affinity = "";
         if (config.general.worker_affinity) {
             affinity = config.general.worker_affinity.join(",");
         }
         let weight = config.general.weight || 1;
-        this.query(sql, [config.general.uuid, JSON.stringify(config), weight, affinity], callback);
+        this.query(sql, [uuid, JSON.stringify(config), weight, affinity], callback);
     }
     disableTopology(uuid, callback) {
         let sql = "CALL qtopology_sp_disable_topology(?);";
