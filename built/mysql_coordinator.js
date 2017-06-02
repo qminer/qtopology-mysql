@@ -4,6 +4,7 @@ const port_default = 3306;
 const mysql = require("mysql");
 const async = require("async");
 const path = require("path");
+const qtopology = require("qtopology");
 const dbu = require("./db_updater");
 //////////////////////////////////////////////////////////////////////
 // Storage-coordination implementation for MySQL
@@ -41,8 +42,12 @@ class MySqlCoordinator {
             callback();
         }
     }
+    log(s) {
+        qtopology.logger().debug("[MySqlCoordinator] " + s);
+    }
     query(sql, obj, callback) {
         try {
+            this.log(`${sql} ${obj}`);
             this.pool.query(sql, obj || [], callback);
         }
         catch (e) {
@@ -175,21 +180,21 @@ class MySqlCoordinator {
         this.query(sql, [uuid, name], callback);
     }
     setTopologyStatus(uuid, status, error, callback) {
-        let sql = "CALL qtopology_sp_update_topology_status(?, ?);";
-        this.query(sql, [uuid, status], callback);
+        let sql = "CALL qtopology_sp_update_topology_status(?, ?, ?);";
+        this.query(sql, [uuid, status, error], callback);
     }
     setWorkerStatus(name, status, callback) {
         let sql = "CALL qtopology_sp_update_worker_status(?, ?);";
         this.query(sql, [name, status], callback);
     }
-    registerTopology(config, overwrite, callback) {
+    registerTopology(uuid, config, callback) {
         let sql = "CALL qtopology_sp_register_topology(?, ?, ?, ?);";
         let affinity = "";
         if (config.general.worker_affinity) {
             affinity = config.general.worker_affinity.join(",");
         }
         let weight = config.general.weight || 1;
-        this.query(sql, [config.general.uuid, JSON.stringify(config), weight, affinity], callback);
+        this.query(sql, [uuid, JSON.stringify(config), weight, affinity], callback);
     }
     disableTopology(uuid, callback) {
         let sql = "CALL qtopology_sp_disable_topology(?);";

@@ -1,6 +1,7 @@
 "use strict";
 const async = require("async");
-const coor = require("../built/mysql_coordinator");
+const fs = require("fs");
+const coor = require("../");
 
 let coordinator = new coor.MySqlCoordinator({
     host: "localhost",
@@ -11,7 +12,9 @@ let coordinator = new coor.MySqlCoordinator({
 });
 
 const worker_name = "worker1";
+let topology_config = JSON.parse(fs.readFileSync("./topology.json", "utf8"));
 const uuid = "the.test.topology";
+topology_config.general.uuid = uuid;
 
 async.series(
     [
@@ -42,7 +45,7 @@ async.series(
         },
         (xcallback) => {
             console.log("Registering topology");
-            coordinator.registerTopology({ general: { uuid: uuid } }, true, (err, data) => {
+            coordinator.registerTopology(topology_config, true, (err, data) => {
                 xcallback();
             });
         },
@@ -131,14 +134,25 @@ async.series(
                 xcallback();
             });
         },
-
-        // (xcallback) => {
-        //     console.log("Setting topology status to running");
-        //     coordinator.setTopologyStatus(uuid, "running", (err) => {
-        //         console.log("setTopologyStatus", err);
-        //         xcallback();
-        //     });
-        // },
+        (xcallback) => {
+            coordinator.getTopologyStatus((err, data) => {
+                console.log("getTopologyStatus", err, data);
+                xcallback();
+            });
+        },
+        (xcallback) => {
+            console.log("Setting worker status");
+            coordinator.setWorkerStatus(worker_name, "alive", (err) => {
+                xcallback();
+            });
+        },
+        (xcallback) => {
+            console.log("Setting topology status to running");
+            coordinator.setTopologyStatus(uuid, "running", null, (err) => {
+                console.log("setTopologyStatus", err);
+                xcallback();
+            });
+        },
         (xcallback) => {
             coordinator.getTopologyStatus((err, data) => {
                 console.log("getTopologyStatus", err, data);
@@ -157,3 +171,21 @@ async.series(
     }
 )
 
+function shutdown(err) {
+    if (err) {
+        console.log("Error", err);
+    }
+    console.log("Closing coordinator...");
+    coordinator.close(() => {
+        console.log("Done.");
+    });
+}
+
+//do something when app is closing
+process.on('exit', shutdown);
+
+//catches ctrl+c event
+process.on('SIGINT', shutdown);
+
+//catches uncaught exceptions
+process.on('uncaughtException', (err) => { shutdown(err); });
