@@ -28,6 +28,7 @@ export interface MySqlTopologyManager {
 export class MySqlCoordinator implements qtopology.CoordinationStorage {
 
     private pool: mysql.IPool;
+    private name: string;
 
     constructor(options: MySqlCoordinatorParams) {
         this.pool = mysql.createPool({
@@ -100,8 +101,8 @@ export class MySqlCoordinator implements qtopology.CoordinationStorage {
     }
     getWorkerStatus(callback: qtopology.SimpleResultCallback<qtopology.LeadershipResultWorkerStatus[]>) {
         let self = this;
-        let sql = "CALL qtopology_sp_refresh_statuses();";
-        self.query(sql, null, (err) => {
+        let sql = "CALL qtopology_sp_leader_ping(?); CALL qtopology_sp_refresh_statuses();";
+        self.query(sql, [self.name], (err) => {
             if (err) return callback(err);
             sql = "CALL qtopology_sp_workers();";
             self.query(sql, null, (err, data) => {
@@ -173,6 +174,7 @@ export class MySqlCoordinator implements qtopology.CoordinationStorage {
     }
     registerWorker(name: string, callback: qtopology.SimpleCallback) {
         let sql = "CALL qtopology_sp_register_worker(?);";
+        this.name = name;
         this.query(sql, [name], callback);
     }
     announceLeaderCandidacy(name: string, callback: qtopology.SimpleCallback) {
