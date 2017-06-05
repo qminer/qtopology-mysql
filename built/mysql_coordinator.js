@@ -76,8 +76,8 @@ class MySqlCoordinator {
     }
     getWorkerStatus(callback) {
         let self = this;
-        let sql = "CALL qtopology_sp_refresh_statuses();";
-        self.query(sql, null, (err) => {
+        let sql = "CALL qtopology_sp_leader_ping(?); CALL qtopology_sp_refresh_statuses();";
+        self.query(sql, [self.name], (err) => {
             if (err)
                 return callback(err);
             sql = "CALL qtopology_sp_workers();";
@@ -154,6 +154,7 @@ class MySqlCoordinator {
     }
     registerWorker(name, callback) {
         let sql = "CALL qtopology_sp_register_worker(?);";
+        this.name = name;
         this.query(sql, [name], callback);
     }
     announceLeaderCandidacy(name, callback) {

@@ -11,6 +11,7 @@ export interface MySqlTopologyManager {
 }
 export declare class MySqlCoordinator implements qtopology.CoordinationStorage {
     private pool;
+    private name;
     constructor(options: MySqlCoordinatorParams);
     init(callback: qtopology.SimpleCallback): void;
     close(callback: qtopology.SimpleCallback): void;
