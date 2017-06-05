@@ -19,9 +19,16 @@ let cmdln = new qtopology.CmdLineParser();
 cmdln
     .define('n', 'name', 'worker1', 'Logical name of the worker');
 let opts = cmdln.process(process.argv);
-
-let w = new qtopology.TopologyWorker(opts.name, coordinator);
-w.run();
+let w = null;
+coordinator.init((err) => {
+    if (err) {
+        console.log(err);
+        return;
+    }
+    let w = new qtopology.TopologyWorker(opts.name, coordinator);
+    w.run();
+    setTimeout(() => { shutdown(); }, 200000);
+})
 
 function shutdown() {
     if (w) {
@@ -35,5 +42,3 @@ function shutdown() {
         w = null;
     }
 }
-
-setTimeout(() => { shutdown(); }, 200000);

@@ -1,3 +1,5 @@
+drop procedure if exists qtopology_sp_leader_ping;
+
 create procedure qtopology_sp_leader_ping(p_name varchar(100))
 begin
     update qtopology_worker
