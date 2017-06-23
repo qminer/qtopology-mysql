@@ -85,7 +85,7 @@ export class MySqlCoordinator implements qtopology.CoordinationStorage {
             let res = [];
             let ids_to_delete = [];
             for (let rec of data[0]) {
-                res.push({ cmd: rec.cmd, content: rec.content });
+                res.push({ cmd: rec.cmd, content: JSON.parse(rec.content) });
                 ids_to_delete.push(rec.id);
             }
             async.each(
@@ -140,6 +140,7 @@ export class MySqlCoordinator implements qtopology.CoordinationStorage {
                         status: rec.status,
                         worker: rec.worker,
                         weight: rec.weight,
+                        enabled: !!rec.enabled,
                         worker_affinity: (rec.worker_affinity || "").split(",").filter(x => x.length > 0)
                     });
                 }
@@ -153,6 +154,17 @@ export class MySqlCoordinator implements qtopology.CoordinationStorage {
     getTopologiesForWorker(name: string, callback: qtopology.SimpleResultCallback<qtopology.LeadershipResultTopologyStatus[]>) {
         this.getTopologyStatusInternal("CALL qtopology_sp_topologies_for_worker(?);", [name], callback);
     }
+    getTopologyDefinition(uuid: string, callback: qtopology.SimpleResultCallback<any>) {
+        let self = this;
+        let sql = "select config from qtopology_topology where uuid = ?;";
+        self.query(sql, [uuid], (err, data) => {
+            if (err) return callback(err);
+            if (data.length == 0) return callback(null, null);
+            let config = JSON.parse(data[0].config);
+            callback(null, config);
+        });
+    }
+
     getLeadershipStatus(callback: qtopology.SimpleResultCallback<qtopology.LeadershipResultStatus>) {
         let self = this;
         let sql = "CALL qtopology_sp_refresh_statuses();";
