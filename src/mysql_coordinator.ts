@@ -154,14 +154,14 @@ export class MySqlCoordinator implements qtopology.CoordinationStorage {
     getTopologiesForWorker(name: string, callback: qtopology.SimpleResultCallback<qtopology.LeadershipResultTopologyStatus[]>) {
         this.getTopologyStatusInternal("CALL qtopology_sp_topologies_for_worker(?);", [name], callback);
     }
-    getTopologyDefinition(uuid: string, callback: qtopology.SimpleResultCallback<any>) {
+    getTopologyDefinition(uuid: string, callback: qtopology.SimpleResultCallback<qtopology.TopologyDefinitionResponse>) {
         let self = this;
-        let sql = "select config from qtopology_topology where uuid = ?;";
+        let sql = "select worker, config from qtopology_topology where uuid = ?;";
         self.query(sql, [uuid], (err, data) => {
             if (err) return callback(err);
             if (data.length == 0) return callback(null, null);
             let config = JSON.parse(data[0].config);
-            callback(null, config);
+            callback(null, { current_worker: data[0].worker, config: config });
         });
     }
 

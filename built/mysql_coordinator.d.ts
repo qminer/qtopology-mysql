@@ -22,7 +22,7 @@ export declare class MySqlCoordinator implements qtopology.CoordinationStorage {
     private getTopologyStatusInternal(sql, obj, callback);
     getTopologyStatus(callback: qtopology.SimpleResultCallback<qtopology.LeadershipResultTopologyStatus[]>): void;
     getTopologiesForWorker(name: string, callback: qtopology.SimpleResultCallback<qtopology.LeadershipResultTopologyStatus[]>): void;
-    getTopologyDefinition(uuid: string, callback: qtopology.SimpleResultCallback<any>): void;
+    getTopologyDefinition(uuid: string, callback: qtopology.SimpleResultCallback<qtopology.TopologyDefinitionResponse>): void;
     getLeadershipStatus(callback: qtopology.SimpleResultCallback<qtopology.LeadershipResultStatus>): void;
     registerWorker(name: string, callback: qtopology.SimpleCallback): void;
     announceLeaderCandidacy(name: string, callback: qtopology.SimpleCallback): void;
