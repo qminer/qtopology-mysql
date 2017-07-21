@@ -10,6 +10,8 @@ const dbu = require("./db_updater");
 // Storage-coordination implementation for MySQL
 class MySqlCoordinator {
     constructor(options) {
+        this.name = null; // this will be set later
+        this.options = JSON.parse(JSON.stringify(options));
         this.pool = mysql.createPool({
             database: options.database,
             host: options.host,
@@ -92,8 +94,8 @@ class MySqlCoordinator {
                         name: rec.name,
                         status: rec.status,
                         lstatus: rec.lstatus,
-                        last_ping_d: rec.last_ping.getTime(),
-                        last_ping: rec.last_ping,
+                        last_ping: rec.last_ping.getTime(),
+                        last_ping_d: rec.last_ping,
                         lstatus_ts: rec.lstatus_ts.getTime(),
                         lstatus_ts_d: rec.lstatus_ts
                     });
@@ -166,6 +168,8 @@ class MySqlCoordinator {
         });
     }
     registerWorker(name, callback) {
+        // this is called once at start-up and is the name of the worker that iuuses this coordination object
+        // so we can save the name of the worker and use it later
         let sql = "CALL qtopology_sp_register_worker(?);";
         this.name = name;
         this.query(sql, [name], callback);
@@ -221,6 +225,17 @@ class MySqlCoordinator {
     deleteTopology(uuid, callback) {
         let sql = "CALL qtopology_sp_delete_topology(?);";
         this.query(sql, [uuid], callback);
+    }
+    getProperties(callback) {
+        let res = [];
+        res.push({ key: "type", value: "MySqlCoordinator" });
+        res.push({ key: "host", value: this.options.host });
+        res.push({ key: "database", value: this.options.database });
+        res.push({ key: "port", value: this.options.port });
+        res.push({ key: "user", value: this.options.user });
+        res.push({ key: "multipleStatements", value: true });
+        res.push({ key: "connectionLimit", value: 10 });
+        callback(null, res);
     }
 }
 exports.MySqlCoordinator = MySqlCoordinator;

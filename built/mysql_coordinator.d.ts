@@ -12,6 +12,7 @@ export interface MySqlTopologyManager {
 export declare class MySqlCoordinator implements qtopology.CoordinationStorage {
     private pool;
     private name;
+    private options;
     constructor(options: MySqlCoordinatorParams);
     init(callback: qtopology.SimpleCallback): void;
     close(callback: qtopology.SimpleCallback): void;
@@ -34,4 +35,5 @@ export declare class MySqlCoordinator implements qtopology.CoordinationStorage {
     disableTopology(uuid: string, callback: qtopology.SimpleCallback): void;
     enableTopology(uuid: string, callback: qtopology.SimpleCallback): void;
     deleteTopology(uuid: string, callback: qtopology.SimpleCallback): void;
+    getProperties(callback: qtopology.SimpleResultCallback<qtopology.StorageProperty[]>): any;
 }
