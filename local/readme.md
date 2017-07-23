@@ -18,12 +18,14 @@ Bash scripts:
 
 # How to run these scripts
 
-0. Set up proper `mysql` connection parameters in config.json
+0. Set up proper `mysql` connection parameters in `config.json`
 1. Run `do_register.sh` to get topology definitions into database
-2. Run `do_disable.sh` to 
+2. Run `do_disable.sh` to disable topologies for now. When workers start, they wont get picked up immediatelly.
 3. Run `gui.js` to start dashboard. You can inspect topologies there.
-4. Run several instances of worker in separate processes (see dashboard to verify they properly registered):
+4. Run several instances of worker in separate processes. Inspect dashboard to verify they properly registered:
     - `node worker.js -n worker1`
     - `node worker.js -n worker2`
     - `node worker.js -n worker3`
-5. Run `do_enable.sh` - this will start distributing topologies among workers
+5. Run `do_enable.sh` - this will start distributing topologies among workers.
+6. Kill one of the workers. You should see it's topologies assigned to other workers within several seconds.
+7. Stop one of the topologies. This should remove it from the worker where it was running. The topology should also be marked as disabled, so other workers will not pick it up until it is enabled again.
