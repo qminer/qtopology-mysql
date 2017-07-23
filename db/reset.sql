@@ -18,6 +18,9 @@ drop procedure if exists qtopology_sp_enable_topology;
 drop procedure if exists qtopology_sp_register_topology;
 drop procedure if exists qtopology_sp_delete_topology;
 drop procedure if exists qtopology_sp_refresh_statuses;
+drop procedure if exists qtopology_sp_send_message;
+drop procedure if exists qtopology_sp_topology;
+drop procedure if exists qtopology_sp_delete_worker;
 
 drop table if exists qtopology_worker;
 drop table if exists qtopology_topology;

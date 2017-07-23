@@ -134,16 +134,25 @@ class MySqlCoordinator {
     getTopologiesForWorker(name, callback) {
         this.getTopologyStatusInternal("CALL qtopology_sp_topologies_for_worker(?);", [name], callback);
     }
-    getTopologyDefinition(uuid, callback) {
+    getTopologyInfo(uuid, callback) {
         let self = this;
-        let sql = "select worker, config from qtopology_topology where uuid = ?;";
+        let sql = "select uuid, status, worker, weight, enabled, worker_affinity, config from qtopology_topology where uuid = ?;";
         self.query(sql, [uuid], (err, data) => {
             if (err)
                 return callback(err);
             if (data.length == 0)
-                return callback(null, null);
-            let config = JSON.parse(data[0].config);
-            callback(null, { current_worker: data[0].worker, config: config });
+                return callback(new Error("Requested topology not found: " + uuid));
+            let hit = data[0];
+            let config = JSON.parse(hit.config);
+            callback(null, {
+                enabled: hit.enabled,
+                status: hit.status,
+                uuid: hit.uuid,
+                weight: hit.weight,
+                worker_affinity: hit.worker_affinity,
+                worker: hit.worker,
+                config: config
+            });
         });
     }
     getLeadershipStatus(callback) {
@@ -236,6 +245,55 @@ class MySqlCoordinator {
         res.push({ key: "multipleStatements", value: true });
         res.push({ key: "connectionLimit", value: 10 });
         callback(null, res);
+    }
+    sendMessageToWorker(worker, cmd, content, callback) {
+        let sql = "CALL qtopology_sp_send_message(?, ?, ?);";
+        this.query(sql, [worker, cmd, JSON.stringify(content)], callback);
+    }
+    stopTopology(uuid, callback) {
+        let self = this;
+        self.getTopologyInfo(uuid, (err, data) => {
+            if (err)
+                return callback(err);
+            if (!data.worker)
+                return callback();
+            self.sendMessageToWorker(data.worker, "stop-topology", { uuid: uuid }, callback);
+        });
+    }
+    clearTopologyError(uuid, callback) {
+        let self = this;
+        self.getTopologyInfo(uuid, (err, data) => {
+            if (err)
+                return callback(err);
+            let hit = data;
+            if (hit.status != "error") {
+                return callback(new Error("Specified topology is not marked as error: " + uuid));
+            }
+            self.setTopologyStatus(uuid, "stopped", null, callback);
+            callback();
+        });
+    }
+    deleteWorker(name, callback) {
+        let self = this;
+        self.getWorkerStatus((err, data) => {
+            if (err)
+                return callback(err);
+            let hits = data.filter(x => x.name == name);
+            if (hits.length > 0) {
+                if (hits[0].status == "dead") {
+                    self.query("CALL qtopology_sp_delete_worker(?);", [name], callback);
+                }
+                else {
+                    callback(new Error("Specified worker is not dead and cannot be deleted."));
+                }
+            }
+            else {
+                callback(new Error("Specified worker doesn't exist and thus cannot be deleted."));
+            }
+        });
+    }
+    shutDownWorker(name, callback) {
+        this.sendMessageToWorker(name, "shutdown", {}, callback);
     }
 }
 exports.MySqlCoordinator = MySqlCoordinator;

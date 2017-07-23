@@ -1,16 +1,12 @@
 "use strict";
 const coor = require("../");
+const fs = require("fs");
 const qtopology = require("qtopology");
 
 qtopology.logger().setLevel("normal");
 
-let coordinator = new coor.MySqlCoordinator({
-    host: "localhost",
-    database: "xtest",
-    user: "qtopology_admin",
-    password: "VSAp2BJ2",
-    port: 3306
-});
+let config = JSON.parse(fs.readFileSync("config.json", "utf8"));
+let coordinator = new coor.MySqlCoordinator(config);
 
 let cmd = new qtopology.CommandLineHandler(coordinator);
 cmd.run(() => {
