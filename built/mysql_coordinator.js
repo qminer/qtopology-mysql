@@ -280,11 +280,11 @@ class MySqlCoordinator {
                 return callback(err);
             let hits = data.filter(x => x.name == name);
             if (hits.length > 0) {
-                if (hits[0].status == "dead") {
+                if (hits[0].status == "unloaded") {
                     self.query("CALL qtopology_sp_delete_worker(?);", [name], callback);
                 }
                 else {
-                    callback(new Error("Specified worker is not dead and cannot be deleted."));
+                    callback(new Error("Specified worker is not unloaded and cannot be deleted."));
                 }
             }
             else {
