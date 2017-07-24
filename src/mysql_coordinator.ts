@@ -102,7 +102,7 @@ export class MySqlCoordinator implements qtopology.CoordinationStorage {
                 });
         });
     }
-    getWorkerStatus(callback: qtopology.SimpleResultCallback<qtopology.LeadershipResultWorkerStatus[]>) {
+    getWorkerStatus(callback: qtopology.SimpleResultCallback<qtopology.WorkerStatus[]>) {
         let self = this;
         let sql = "CALL qtopology_sp_leader_ping(?); CALL qtopology_sp_refresh_statuses();";
         self.query(sql, [self.name], (err) => {
@@ -129,7 +129,7 @@ export class MySqlCoordinator implements qtopology.CoordinationStorage {
         });
     }
 
-    private getTopologyStatusInternal(sql: string, obj: any, callback: qtopology.SimpleResultCallback<qtopology.LeadershipResultTopologyStatus[]>) {
+    private getTopologyStatusInternal(sql: string, obj: any, callback: qtopology.SimpleResultCallback<qtopology.TopologyStatus[]>) {
         let self = this;
         let xsql = "CALL qtopology_sp_refresh_statuses();";
         self.query(xsql, null, (err) => {
@@ -144,6 +144,7 @@ export class MySqlCoordinator implements qtopology.CoordinationStorage {
                         worker: rec.worker,
                         weight: rec.weight,
                         enabled: !!rec.enabled,
+                        error: rec.error,
                         worker_affinity: (rec.worker_affinity || "").split(",").filter(x => x.length > 0)
                     });
                 }
@@ -151,15 +152,15 @@ export class MySqlCoordinator implements qtopology.CoordinationStorage {
             });
         });
     }
-    getTopologyStatus(callback: qtopology.SimpleResultCallback<qtopology.LeadershipResultTopologyStatus[]>) {
+    getTopologyStatus(callback: qtopology.SimpleResultCallback<qtopology.TopologyStatus[]>) {
         this.getTopologyStatusInternal("CALL qtopology_sp_topologies();", null, callback);
     }
-    getTopologiesForWorker(name: string, callback: qtopology.SimpleResultCallback<qtopology.LeadershipResultTopologyStatus[]>) {
+    getTopologiesForWorker(name: string, callback: qtopology.SimpleResultCallback<qtopology.TopologyStatus[]>) {
         this.getTopologyStatusInternal("CALL qtopology_sp_topologies_for_worker(?);", [name], callback);
     }
     getTopologyInfo(uuid: string, callback: qtopology.SimpleResultCallback<qtopology.TopologyInfoResponse>) {
         let self = this;
-        let sql = "select uuid, status, worker, weight, enabled, worker_affinity, config from qtopology_topology where uuid = ?;";
+        let sql = "select uuid, status, worker, weight, enabled, worker_affinity, error, config from qtopology_topology where uuid = ?;";
         self.query(sql, [uuid], (err, data) => {
             if (err) return callback(err);
             if (data.length == 0) return callback(new Error("Requested topology not found: " + uuid));
@@ -169,6 +170,7 @@ export class MySqlCoordinator implements qtopology.CoordinationStorage {
                 enabled: hit.enabled,
                 status: hit.status,
                 uuid: hit.uuid,
+                error: hit.error,
                 weight: hit.weight,
                 worker_affinity: hit.worker_affinity,
                 worker: hit.worker,
@@ -315,5 +317,11 @@ export class MySqlCoordinator implements qtopology.CoordinationStorage {
 
     shutDownWorker(name: string, callback: qtopology.SimpleCallback) {
         this.sendMessageToWorker(name, "shutdown", {}, callback);
+    }
+    getTopologyHistory(uuid: string, callback: qtopology.SimpleResultCallback<qtopology.TopologyStatusHistory[]>) {
+        callback(null, []);
+    }
+    getWorkerHistory(name: string, callback: qtopology.SimpleResultCallback<qtopology.WorkerStatusHistory[]>) {
+        callback(null, []);
     }
 }

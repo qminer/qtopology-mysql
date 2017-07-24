@@ -26,3 +26,5 @@ drop table if exists qtopology_worker;
 drop table if exists qtopology_topology;
 drop table if exists qtopology_message;
 drop table if exists qtopology_settings;
+drop table if exists qtopology_worker_history;
+drop table if exists qtopology_topology_history;

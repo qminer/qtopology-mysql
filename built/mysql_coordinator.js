@@ -136,7 +136,7 @@ class MySqlCoordinator {
     }
     getTopologyInfo(uuid, callback) {
         let self = this;
-        let sql = "select uuid, status, worker, weight, enabled, worker_affinity, config from qtopology_topology where uuid = ?;";
+        let sql = "select uuid, status, worker, weight, enabled, worker_affinity, error, config from qtopology_topology where uuid = ?;";
         self.query(sql, [uuid], (err, data) => {
             if (err)
                 return callback(err);
@@ -148,6 +148,7 @@ class MySqlCoordinator {
                 enabled: hit.enabled,
                 status: hit.status,
                 uuid: hit.uuid,
+                error: hit.error,
                 weight: hit.weight,
                 worker_affinity: hit.worker_affinity,
                 worker: hit.worker,
@@ -294,6 +295,12 @@ class MySqlCoordinator {
     }
     shutDownWorker(name, callback) {
         this.sendMessageToWorker(name, "shutdown", {}, callback);
+    }
+    getTopologyHistory(uuid, callback) {
+        callback(null, []);
+    }
+    getWorkerHistory(name, callback) {
+        callback(null, []);
     }
 }
 exports.MySqlCoordinator = MySqlCoordinator;

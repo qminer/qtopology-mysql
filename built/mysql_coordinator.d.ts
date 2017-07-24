@@ -19,10 +19,10 @@ export declare class MySqlCoordinator implements qtopology.CoordinationStorage {
     private log(s);
     private query(sql, obj, callback);
     getMessages(name: string, callback: qtopology.SimpleResultCallback<qtopology.StorageResultMessage[]>): void;
-    getWorkerStatus(callback: qtopology.SimpleResultCallback<qtopology.LeadershipResultWorkerStatus[]>): void;
+    getWorkerStatus(callback: qtopology.SimpleResultCallback<qtopology.WorkerStatus[]>): void;
     private getTopologyStatusInternal(sql, obj, callback);
-    getTopologyStatus(callback: qtopology.SimpleResultCallback<qtopology.LeadershipResultTopologyStatus[]>): void;
-    getTopologiesForWorker(name: string, callback: qtopology.SimpleResultCallback<qtopology.LeadershipResultTopologyStatus[]>): void;
+    getTopologyStatus(callback: qtopology.SimpleResultCallback<qtopology.TopologyStatus[]>): void;
+    getTopologiesForWorker(name: string, callback: qtopology.SimpleResultCallback<qtopology.TopologyStatus[]>): void;
     getTopologyInfo(uuid: string, callback: qtopology.SimpleResultCallback<qtopology.TopologyInfoResponse>): void;
     getLeadershipStatus(callback: qtopology.SimpleResultCallback<qtopology.LeadershipResultStatus>): void;
     registerWorker(name: string, callback: qtopology.SimpleCallback): void;
@@ -41,4 +41,6 @@ export declare class MySqlCoordinator implements qtopology.CoordinationStorage {
     clearTopologyError(uuid: string, callback: qtopology.SimpleCallback): void;
     deleteWorker(name: string, callback: qtopology.SimpleCallback): void;
     shutDownWorker(name: string, callback: qtopology.SimpleCallback): void;
+    getTopologyHistory(uuid: string, callback: qtopology.SimpleResultCallback<qtopology.TopologyStatusHistory[]>): void;
+    getWorkerHistory(name: string, callback: qtopology.SimpleResultCallback<qtopology.WorkerStatusHistory[]>): void;
 }
