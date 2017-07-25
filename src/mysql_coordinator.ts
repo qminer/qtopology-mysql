@@ -319,9 +319,43 @@ export class MySqlCoordinator implements qtopology.CoordinationStorage {
         this.sendMessageToWorker(name, "shutdown", {}, callback);
     }
     getTopologyHistory(uuid: string, callback: qtopology.SimpleResultCallback<qtopology.TopologyStatusHistory[]>) {
-        callback(null, []);
+        let self = this;
+        let sql = "select * from qtopology_topology_history where uuid = ? order by ts desc limit 100;";
+        self.query(sql, [uuid], (err, data) => {
+            if (err) return callback(err);
+            let res: qtopology.TopologyStatusHistory[];
+            res = [];
+            data.forEach(x => {
+                res.push({
+                    enabled: x.enabled,
+                    error: x.error,
+                    status: x.status,
+                    ts: x.ts,
+                    uuid: x.uuid,
+                    weight: x.weight,
+                    worker: x.worker,
+                    worker_affinity: x.worker_affinity
+                });
+            });
+            callback(null, data);
+        });
     }
     getWorkerHistory(name: string, callback: qtopology.SimpleResultCallback<qtopology.WorkerStatusHistory[]>) {
-        callback(null, []);
+        let self = this;
+        let sql = "select * from qtopology_worker_history where name = ? order by ts desc limit 100;";
+        self.query(sql, [name], (err, data) => {
+            if (err) return callback(err);
+            let res: qtopology.WorkerStatusHistory[];
+            res = [];
+            data.forEach(x => {
+                res.push({
+                    lstatus: x.lstatus,
+                    name: x.name,
+                    status: x.status,
+                    ts: x.ts
+                });
+            });
+            callback(null, data);
+        });
     }
 }
