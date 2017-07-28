@@ -1,6 +1,6 @@
 # qtopology-mysql
 
-This package contains coordination-storage plugin for [QTopology](http://github.com/qminerqtopology) that uses `MySQL` database to store and manipulate coordination data.
+This package contains coordination-storage plugin for [QTopology](http://github.com/qminer/qtopology) that uses `MySQL` database to store and manipulate coordination data.
 
 ![npm version](https://badge.fury.io/js/qtopology-mysql.svg "NPM version")
 
