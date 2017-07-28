@@ -1,0 +1,7 @@
+{
+    "host": "localhost",
+    "database": "xtest",
+    "user": "qtopology_admin",
+    "password": "VSAp2BJ2",
+    "port": 3306
+}
