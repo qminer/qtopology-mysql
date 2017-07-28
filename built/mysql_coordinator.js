@@ -10,6 +10,8 @@ const dbu = require("./db_updater");
 // Storage-coordination implementation for MySQL
 class MySqlCoordinator {
     constructor(options) {
+        this.name = null; // this will be set later
+        this.options = JSON.parse(JSON.stringify(options));
         this.pool = mysql.createPool({
             database: options.database,
             host: options.host,
@@ -63,7 +65,7 @@ class MySqlCoordinator {
             let res = [];
             let ids_to_delete = [];
             for (let rec of data[0]) {
-                res.push({ cmd: rec.cmd, content: rec.content });
+                res.push({ cmd: rec.cmd, content: JSON.parse(rec.content) });
                 ids_to_delete.push(rec.id);
             }
             async.each(ids_to_delete, (item, xcallback) => {
@@ -92,8 +94,8 @@ class MySqlCoordinator {
                         name: rec.name,
                         status: rec.status,
                         lstatus: rec.lstatus,
-                        last_ping_d: rec.last_ping.getTime(),
-                        last_ping: rec.last_ping,
+                        last_ping: rec.last_ping.getTime(),
+                        last_ping_d: rec.last_ping,
                         lstatus_ts: rec.lstatus_ts.getTime(),
                         lstatus_ts_d: rec.lstatus_ts
                     });
@@ -118,6 +120,8 @@ class MySqlCoordinator {
                         status: rec.status,
                         worker: rec.worker,
                         weight: rec.weight,
+                        enabled: !!rec.enabled,
+                        error: rec.error,
                         worker_affinity: (rec.worker_affinity || "").split(",").filter(x => x.length > 0)
                     });
                 }
@@ -130,6 +134,28 @@ class MySqlCoordinator {
     }
     getTopologiesForWorker(name, callback) {
         this.getTopologyStatusInternal("CALL qtopology_sp_topologies_for_worker(?);", [name], callback);
+    }
+    getTopologyInfo(uuid, callback) {
+        let self = this;
+        let sql = "select uuid, status, worker, weight, enabled, worker_affinity, error, config from qtopology_topology where uuid = ?;";
+        self.query(sql, [uuid], (err, data) => {
+            if (err)
+                return callback(err);
+            if (data.length == 0)
+                return callback(new Error("Requested topology not found: " + uuid));
+            let hit = data[0];
+            let config = JSON.parse(hit.config);
+            callback(null, {
+                enabled: hit.enabled,
+                status: hit.status,
+                uuid: hit.uuid,
+                error: hit.error,
+                weight: hit.weight,
+                worker_affinity: hit.worker_affinity,
+                worker: hit.worker,
+                config: config
+            });
+        });
     }
     getLeadershipStatus(callback) {
         let self = this;
@@ -153,6 +179,8 @@ class MySqlCoordinator {
         });
     }
     registerWorker(name, callback) {
+        // this is called once at start-up and is the name of the worker that iuuses this coordination object
+        // so we can save the name of the worker and use it later
         let sql = "CALL qtopology_sp_register_worker(?);";
         this.name = name;
         this.query(sql, [name], callback);
@@ -208,6 +236,108 @@ class MySqlCoordinator {
     deleteTopology(uuid, callback) {
         let sql = "CALL qtopology_sp_delete_topology(?);";
         this.query(sql, [uuid], callback);
+    }
+    getProperties(callback) {
+        let res = [];
+        res.push({ key: "type", value: "MySqlCoordinator" });
+        res.push({ key: "host", value: this.options.host });
+        res.push({ key: "database", value: this.options.database });
+        res.push({ key: "port", value: this.options.port });
+        res.push({ key: "user", value: this.options.user });
+        res.push({ key: "multipleStatements", value: true });
+        res.push({ key: "connectionLimit", value: 10 });
+        callback(null, res);
+    }
+    sendMessageToWorker(worker, cmd, content, callback) {
+        let sql = "CALL qtopology_sp_send_message(?, ?, ?);";
+        this.query(sql, [worker, cmd, JSON.stringify(content)], callback);
+    }
+    stopTopology(uuid, callback) {
+        let self = this;
+        self.getTopologyInfo(uuid, (err, data) => {
+            if (err)
+                return callback(err);
+            if (!data.worker)
+                return callback();
+            self.sendMessageToWorker(data.worker, "stop-topology", { uuid: uuid }, callback);
+        });
+    }
+    clearTopologyError(uuid, callback) {
+        let self = this;
+        self.getTopologyInfo(uuid, (err, data) => {
+            if (err)
+                return callback(err);
+            let hit = data;
+            if (hit.status != "error") {
+                return callback(new Error("Specified topology is not marked as error: " + uuid));
+            }
+            self.setTopologyStatus(uuid, "stopped", null, callback);
+            callback();
+        });
+    }
+    deleteWorker(name, callback) {
+        let self = this;
+        self.getWorkerStatus((err, data) => {
+            if (err)
+                return callback(err);
+            let hits = data.filter(x => x.name == name);
+            if (hits.length > 0) {
+                if (hits[0].status == "unloaded") {
+                    self.query("CALL qtopology_sp_delete_worker(?);", [name], callback);
+                }
+                else {
+                    callback(new Error("Specified worker is not unloaded and cannot be deleted."));
+                }
+            }
+            else {
+                callback(new Error("Specified worker doesn't exist and thus cannot be deleted."));
+            }
+        });
+    }
+    shutDownWorker(name, callback) {
+        this.sendMessageToWorker(name, "shutdown", {}, callback);
+    }
+    getTopologyHistory(uuid, callback) {
+        let self = this;
+        let sql = "select * from qtopology_topology_history where uuid = ? order by ts desc limit 100;";
+        self.query(sql, [uuid], (err, data) => {
+            if (err)
+                return callback(err);
+            let res;
+            res = [];
+            data.forEach(x => {
+                res.push({
+                    enabled: x.enabled,
+                    error: x.error,
+                    status: x.status,
+                    ts: x.ts,
+                    uuid: x.uuid,
+                    weight: x.weight,
+                    worker: x.worker,
+                    worker_affinity: x.worker_affinity
+                });
+            });
+            callback(null, data);
+        });
+    }
+    getWorkerHistory(name, callback) {
+        let self = this;
+        let sql = "select * from qtopology_worker_history where name = ? order by ts desc limit 100;";
+        self.query(sql, [name], (err, data) => {
+            if (err)
+                return callback(err);
+            let res;
+            res = [];
+            data.forEach(x => {
+                res.push({
+                    lstatus: x.lstatus,
+                    name: x.name,
+                    status: x.status,
+                    ts: x.ts
+                });
+            });
+            callback(null, data);
+        });
     }
 }
 exports.MySqlCoordinator = MySqlCoordinator;

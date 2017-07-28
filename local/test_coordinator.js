@@ -3,13 +3,9 @@ const async = require("async");
 const fs = require("fs");
 const coor = require("../");
 
-let coordinator = new coor.MySqlCoordinator({
-    host: "localhost",
-    database: "xtest",
-    user: "qtopology_admin",
-    password: "VSAp2BJ2",
-    port: 3306
-});
+let config = JSON.parse(fs.readFileSync("config.json", "utf8"));
+
+let coordinator = new coor.MySqlCoordinator(config);
 
 const worker_name = "worker1";
 let topology_config = JSON.parse(fs.readFileSync("./topology.json", "utf8"));
