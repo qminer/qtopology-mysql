@@ -271,7 +271,7 @@ class MySqlCoordinator {
             if (hit.status != "error") {
                 return callback(new Error("Specified topology is not marked as error: " + uuid));
             }
-            self.setTopologyStatus(uuid, "stopped", null, callback);
+            self.setTopologyStatus(uuid, "unassigned", null, callback);
             callback();
         });
     }
