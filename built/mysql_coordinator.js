@@ -259,7 +259,11 @@ class MySqlCoordinator {
                 return callback(err);
             if (!data.worker)
                 return callback();
-            self.sendMessageToWorker(data.worker, "stop-topology", { uuid: uuid }, callback);
+            self.disableTopology(uuid, (err) => {
+                if (err)
+                    return callback(err);
+                self.sendMessageToWorker(data.worker, "stop-topology", { uuid: uuid }, callback);
+            });
         });
     }
     clearTopologyError(uuid, callback) {
