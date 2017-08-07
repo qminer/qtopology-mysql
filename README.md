@@ -44,16 +44,21 @@ If database schema is already at the latest version, then nothing happens.
 | qtopology_worker | List of workers, their statuses and latest pings |
 | qtopology_topology | List of topologies, their statuses and latest pings |
 | qtopology_message | Message queue for workers |
+| qtopology_worker_history | List of important changes inside `qtopology_worker` table |
+| qtopology_topology_hostory | List of important changes inside `qtopology_topology` table |
 
 ### Stored procedures
 
 |Table|Description|
 |-----|-----|
+| qtopology_sp_add_topology_history | Enters new historical record for topology | 
+| qtopology_sp_add_worker_history | Enters new historical record for worker | 
 | qtopology_sp_announce_leader_candidacy | Sets status for given worker that it is a candidate for leadership |
 | qtopology_sp_assign_topology | Assigns topology to given worker |
 | qtopology_sp_check_leader_candidacy | Checks if leadership candidacy succeeded for given worker |
 | qtopology_sp_delete_message | Deletes sepcified message |
 | qtopology_sp_delete_topology | Deletes specified topology |
+| qtopology_sp_delete_worker | Deletes specified worker |
 | qtopology_sp_disable_defunct_leaders | Disables leaders that have been inactive too long or are marked as dead |
 | qtopology_sp_disable_defunct_workers | Disables workers that have been inactive too long or are marked as dead |
 | qtopology_sp_disable_topology | Disables topology |
@@ -63,6 +68,7 @@ If database schema is already at the latest version, then nothing happens.
 | qtopology_sp_refresh_statuses | Refreshes all statuses by calling other stored procedures that update inactive workers etc. |
 | qtopology_sp_register_topology | Registers new topology. If topology exists, it is overwritten. |
 | qtopology_sp_register_worker | Registers new worker. If worker exists, it is overwritten. |
+| qtopology_sp_send_message | Inserts new message into message table |
 | qtopology_sp_topologies | Lists all topologies with their statuses and other data |
 | qtopology_sp_topologies_for_worker | Lists all topologies for single worker with their statuses and other data |
 | qtopology_sp_unassign_waiting_topologies | Sets topologies that have been assigned a while ago but are not running as unassigned. |
