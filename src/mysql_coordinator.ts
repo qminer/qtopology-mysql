@@ -281,7 +281,10 @@ export class MySqlCoordinator implements qtopology.CoordinationStorage {
         self.getTopologyInfo(uuid, (err, data) => {
             if (err) return callback(err);
             if (!data.worker) return callback();
-            self.sendMessageToWorker(data.worker, "stop-topology", { uuid: uuid }, callback);
+            self.disableTopology(uuid, (err) => {
+                if (err) return callback(err);
+                self.sendMessageToWorker(data.worker, "stop-topology", { uuid: uuid }, callback);
+            });
         });
     }
 
@@ -293,7 +296,7 @@ export class MySqlCoordinator implements qtopology.CoordinationStorage {
             if (hit.status != "error") {
                 return callback(new Error("Specified topology is not marked as error: " + uuid));
             }
-            self.setTopologyStatus(uuid, "stopped", null, callback);
+            self.setTopologyStatus(uuid, "unassigned", null, callback);
             callback();
         });
     }
