@@ -6,6 +6,16 @@ const async = require("async");
 const path = require("path");
 const qtopology = require("qtopology");
 const dbu = require("./db_updater");
+const qh = require("./query_helper");
+//////////////////////////////////////////////////////////////////////
+const table_names = {
+    qtopology_message: "qtopology_message",
+    qtopology_settings: "qtopology_settings",
+    qtopology_topology: "qtopology_topology",
+    qtopology_topology_history: "qtopology_topology_history",
+    qtopology_worker: "qtopology_worker",
+    qtopology_worker_history: "qtopology_worker_history"
+};
 //////////////////////////////////////////////////////////////////////
 // Storage-coordination implementation for MySQL
 class MySqlCoordinator {
@@ -69,8 +79,8 @@ class MySqlCoordinator {
                 ids_to_delete.push(rec.id);
             }
             async.each(ids_to_delete, (item, xcallback) => {
-                let sql2 = "CALL qtopology_sp_delete_message(?);";
-                self.query(sql2, [item], xcallback);
+                let sql2 = qh.createDelete(table_names.qtopology_message, { id: item });
+                self.query(sql2, null, xcallback);
             }, (err) => {
                 callback(err, res);
             });
@@ -82,12 +92,12 @@ class MySqlCoordinator {
         self.query(sql, [self.name], (err) => {
             if (err)
                 return callback(err);
-            sql = "CALL qtopology_sp_workers();";
+            sql = qh.createSelect(["name", "status", "lstatus", "lstatus_ts", "last_ping"], table_names.qtopology_worker, {});
             self.query(sql, null, (err, data) => {
                 if (err)
                     return callback(err);
                 let res = [];
-                for (let rec of data[0]) {
+                for (let rec of data) {
                     rec.last_ping = rec.last_ping || new Date();
                     rec.lstatus_ts = rec.lstatus_ts || new Date();
                     res.push({
@@ -114,7 +124,7 @@ class MySqlCoordinator {
                 if (err)
                     return callback(err);
                 let res = [];
-                for (let rec of data[0]) {
+                for (let rec of data) {
                     res.push({
                         uuid: rec.uuid,
                         status: rec.status,
@@ -130,10 +140,12 @@ class MySqlCoordinator {
         });
     }
     getTopologyStatus(callback) {
-        this.getTopologyStatusInternal("CALL qtopology_sp_topologies();", null, callback);
+        let sql = qh.createSelect(["uuid", "status", "worker", "weight", "worker_affinity", "enabled"], table_names.qtopology_topology, {});
+        this.getTopologyStatusInternal(sql, null, callback);
     }
     getTopologiesForWorker(name, callback) {
-        this.getTopologyStatusInternal("CALL qtopology_sp_topologies_for_worker(?);", [name], callback);
+        let sql = qh.createSelect(["uuid", "status", "worker", "weight", "worker_affinity", "enabled"], table_names.qtopology_topology, { worker: name });
+        this.getTopologyStatusInternal(sql, null, callback);
     }
     getTopologyInfo(uuid, callback) {
         let self = this;
@@ -205,16 +217,16 @@ class MySqlCoordinator {
         });
     }
     assignTopology(uuid, name, callback) {
-        let sql = "CALL qtopology_sp_assign_topology(?, ?);";
-        this.query(sql, [uuid, name], callback);
+        let sql = qh.createUpdate({ worker: name, status: "waiting" }, table_names.qtopology_topology, { uuid: uuid });
+        this.query(sql, null, callback);
     }
     setTopologyStatus(uuid, status, error, callback) {
-        let sql = "CALL qtopology_sp_update_topology_status(?, ?, ?);";
-        this.query(sql, [uuid, status, error], callback);
+        let sql = qh.createUpdate({ status: status, last_ping: new Date(), error: error }, table_names.qtopology_topology, { uuid: uuid });
+        this.query(sql, null, callback);
     }
     setWorkerStatus(name, status, callback) {
-        let sql = "CALL qtopology_sp_update_worker_status(?, ?);";
-        this.query(sql, [name, status], callback);
+        let sql = qh.createUpdate({ status: status, last_ping: new Date() }, table_names.qtopology_worker, { name: name });
+        this.query(sql, null, callback);
     }
     registerTopology(uuid, config, callback) {
         let sql = "CALL qtopology_sp_register_topology(?, ?, ?, ?);";
@@ -226,16 +238,16 @@ class MySqlCoordinator {
         this.query(sql, [uuid, JSON.stringify(config), weight, affinity], callback);
     }
     disableTopology(uuid, callback) {
-        let sql = "CALL qtopology_sp_disable_topology(?);";
-        this.query(sql, [uuid], callback);
+        let sql = qh.createUpdate({ enabled: 0 }, table_names.qtopology_topology, { uuid: uuid });
+        this.query(sql, null, callback);
     }
     enableTopology(uuid, callback) {
-        let sql = "CALL qtopology_sp_enable_topology(?);";
-        this.query(sql, [uuid], callback);
+        let sql = qh.createUpdate({ enabled: 1 }, table_names.qtopology_topology, { uuid: uuid });
+        this.query(sql, null, callback);
     }
     deleteTopology(uuid, callback) {
-        let sql = "CALL qtopology_sp_delete_topology(?);";
-        this.query(sql, [uuid], callback);
+        let sql = qh.createDelete(table_names.qtopology_topology, { uuid: uuid });
+        this.query(sql, null, callback);
     }
     getProperties(callback) {
         let res = [];
@@ -249,8 +261,8 @@ class MySqlCoordinator {
         callback(null, res);
     }
     sendMessageToWorker(worker, cmd, content, callback) {
-        let sql = "CALL qtopology_sp_send_message(?, ?, ?);";
-        this.query(sql, [worker, cmd, JSON.stringify(content)], callback);
+        let sql = qh.createInsert({ worker: worker, cmd: cmd, content: JSON.stringify(content) }, table_names.qtopology_message);
+        this.query(sql, null, callback);
     }
     stopTopology(uuid, callback) {
         let self = this;
@@ -287,7 +299,8 @@ class MySqlCoordinator {
             let hits = data.filter(x => x.name == name);
             if (hits.length > 0) {
                 if (hits[0].status == "unloaded") {
-                    self.query("CALL qtopology_sp_delete_worker(?);", [name], callback);
+                    let sql = qh.createDelete(table_names.qtopology_worker, { name: name, status: "unlodaded" });
+                    self.query(sql, null, callback);
                 }
                 else {
                     callback(new Error("Specified worker is not unloaded and cannot be deleted."));
