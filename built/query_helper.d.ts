@@ -34,17 +34,31 @@ export declare function mapObjectToArrayOfFields(record: any, field_list: any): 
  * @param record {object} - record to be inserted
  * @param table {string} - name of the table to insert into
  */
-export declare function createInsert(record: any, table: any): string;
+export declare function createInsert(record: any, table: string): string;
 /**
  * This method creates UPSERT statement for given object and given table.
  * @param record {object} - record to be upserted
  * @param table {string} - name of the table to upsert into
+ * @param field {string} - name of the field that is to de used to determine existing record
  */
-export declare function createUpsert(record: any, table: any, field: any): string;
+export declare function createUpsert(record: any, table: string, field: string): string;
 /**
  * This method creates UPDATE statement for given object and given table.
  * @param record {object} - record to be updated. Must contain "id" field if query is not specified.
  * @param table {string} - name of the table where records should be updated
  * @param query {object} - query to find affected records.
  */
-export declare function createUpdate(record: any, table: any, query: any): string;
+export declare function createUpdate(record: any, table: string, query: any): string;
+/**
+ * This method creates UPDATE statement for given object and given table.
+ * @param table {string} - name of the table where records should be updated
+ * @param query {object} - query to find affected records.
+ */
+export declare function createDelete(table: string, query: any): string;
+/**
+ * This method creates UPDATE statement for given object and given table.
+ * @param fields {string[]} - list of field names to retrieve
+ * @param table {string} - name of the table where records should be updated
+ * @param query {object} - query to find affected records.
+ */
+export declare function createSelect(fields: string[], table: string, query: any): string;

@@ -1,0 +1,13 @@
+drop procedure if exists qtopology_sp_delete_message;
+drop procedure if exists qtopology_sp_workers;
+drop procedure if exists qtopology_sp_topologies;
+drop procedure if exists qtopology_sp_topologies_for_worker;
+drop procedure if exists qtopology_sp_disable_topology;
+drop procedure if exists qtopology_sp_enable_topology;
+drop procedure if exists qtopology_sp_assign_topology;
+drop procedure if exists qtopology_sp_update_topology_status;
+drop procedure if exists qtopology_sp_update_worker_status;
+drop procedure if exists qtopology_sp_delete_topology;
+drop procedure if exists qtopology_sp_send_message;
+drop procedure if exists qtopology_sp_delete_worker;
+drop procedure if exists qtopology_sp_topology;

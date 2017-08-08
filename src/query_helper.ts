@@ -300,7 +300,7 @@ export function mapObjectToArrayOfFields(record, field_list) {
  * @param record {object} - record to be inserted
  * @param table {string} - name of the table to insert into
  */
-export function createInsert(record, table) {
+export function createInsert(record: any, table: string) {
     let vals_a = [];
     for (let i in record) {
         vals_a.push(format(record[i]));
@@ -314,8 +314,9 @@ export function createInsert(record, table) {
  * This method creates UPSERT statement for given object and given table.
  * @param record {object} - record to be upserted
  * @param table {string} - name of the table to upsert into
+ * @param field {string} - name of the field that is to de used to determine existing record
  */
-export function createUpsert(record, table, field) {
+export function createUpsert(record: any, table: string, field: string) {
     let vals_a = [];
     for (let i in record) {
         vals_a.push(format(record[i]));
@@ -331,7 +332,7 @@ export function createUpsert(record, table, field) {
  * @param table {string} - name of the table where records should be updated
  * @param query {object} - query to find affected records.
  */
-export function createUpdate(record, table, query) {
+export function createUpdate(record: any, table: string, query: any) {
     let vals_a = [];
     for (let i in record) {
         if (i === "id" && !query) {
@@ -349,3 +350,27 @@ export function createUpdate(record, table, query) {
     let sql = "update " + table + " set " + vals + " " + q_string;
     return sql;
 }
+
+/**
+ * This method creates UPDATE statement for given object and given table.
+ * @param table {string} - name of the table where records should be updated
+ * @param query {object} - query to find affected records.
+ */
+export function createDelete(table: string, query: any) {
+    let q_string = mapQuery(query) + ";";
+    let sql = "delete from " + table + " " + q_string;
+    return sql;
+}
+
+/**
+ * This method creates UPDATE statement for given object and given table.
+ * @param fields {string[]} - list of field names to retrieve
+ * @param table {string} - name of the table where records should be updated
+ * @param query {object} - query to find affected records.
+ */
+export function createSelect(fields: string[], table: string, query: any) {
+    let q_string = mapQuery(query) + ";";
+    let sql = "select " + fields.join(",") + " from " + table + " " + q_string;
+    return sql;
+}
+

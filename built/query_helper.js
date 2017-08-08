@@ -297,6 +297,7 @@ exports.createInsert = createInsert;
  * This method creates UPSERT statement for given object and given table.
  * @param record {object} - record to be upserted
  * @param table {string} - name of the table to upsert into
+ * @param field {string} - name of the field that is to de used to determine existing record
  */
 function createUpsert(record, table, field) {
     let vals_a = [];
@@ -334,4 +335,27 @@ function createUpdate(record, table, query) {
     return sql;
 }
 exports.createUpdate = createUpdate;
+/**
+ * This method creates UPDATE statement for given object and given table.
+ * @param table {string} - name of the table where records should be updated
+ * @param query {object} - query to find affected records.
+ */
+function createDelete(table, query) {
+    let q_string = mapQuery(query) + ";";
+    let sql = "delete from " + table + " " + q_string;
+    return sql;
+}
+exports.createDelete = createDelete;
+/**
+ * This method creates UPDATE statement for given object and given table.
+ * @param fields {string[]} - list of field names to retrieve
+ * @param table {string} - name of the table where records should be updated
+ * @param query {object} - query to find affected records.
+ */
+function createSelect(fields, table, query) {
+    let q_string = mapQuery(query) + ";";
+    let sql = "select " + fields.join(",") + " from " + table + " " + q_string;
+    return sql;
+}
+exports.createSelect = createSelect;
 //# sourceMappingURL=query_helper.js.map

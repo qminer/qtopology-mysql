@@ -7,6 +7,11 @@ let qh = require("../built/query_helper");
 
 describe('Query helper', function () {
     describe('mapQuery', function () {
+        it('should handle empty query', function () {
+            let q = { };
+            let res = qh.mapQuery(q);
+            assert.equal(res, "");
+        });
         it('should handle simple string', function () {
             let q = { b: "x" };
             let res = qh.mapQuery(q);
@@ -71,6 +76,29 @@ describe('Query helper', function () {
             let table = "tab1";
             let res = qh.createUpdate(data, table, query);
             assert.equal(res, "update tab1 set id = 1, b = 'x' where c = 45;");
+        });
+    });
+    describe('createDelete', function () {
+        it('should handle simple delete via ID', function () {
+            let query = { id: 1 };
+            let table = "tab1";
+            let res = qh.createDelete(table, query);
+            assert.equal(res, "delete from tab1 where id = 1;");
+        });
+        it('should handle simple delete via empty query', function () {
+            let query = { };
+            let table = "tab1";
+            let res = qh.createDelete(table, query);
+            assert.equal(res, "delete from tab1 ;");
+        });
+    });
+    describe('createSelect', function () {
+        it('should handle simple delete via ID', function () {
+            let query = { id: 1 };
+            let table = "tab1";
+            let fields = ["a", "b", "c"];
+            let res = qh.createSelect(fields, table, query);
+            assert.equal(res, "select a,b,c from tab1 where id = 1;");
         });
     });
 });
