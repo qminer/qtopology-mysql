@@ -1,6 +1,6 @@
 {
   "name": "qtopology-mysql",
-  "version": "0.4.2",
+  "version": "1.0.0",
   "description": "MySQL-based coordination storage for QTopology",
   "main": "built/mysql_coordinator.js",
   "typings": "./built/mysql_coordinator",

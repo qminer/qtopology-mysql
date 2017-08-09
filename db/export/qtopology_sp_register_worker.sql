@@ -8,4 +8,5 @@ begin
         insert into qtopology_worker(name, status, lstatus, lstatus_ts, last_ping)
         values (p_name, 'alive', '', NOW(), NOW());
     end if;
+    call qtopology_sp_add_worker_history(p_name);
 end

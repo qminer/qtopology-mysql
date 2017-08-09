@@ -89,16 +89,23 @@ describe('Query helper', function () {
             let query = { };
             let table = "tab1";
             let res = qh.createDelete(table, query);
-            assert.equal(res, "delete from tab1 ;");
+            assert.equal(res, "delete from tab1;");
         });
     });
     describe('createSelect', function () {
-        it('should handle simple delete via ID', function () {
+        it('should handle simple select', function () {
             let query = { id: 1 };
             let table = "tab1";
             let fields = ["a", "b", "c"];
             let res = qh.createSelect(fields, table, query);
-            assert.equal(res, "select a,b,c from tab1 where id = 1;");
+            assert.equal(res, "select a, b, c from tab1 where id = 1;");
+        });
+        it('should handle complex select', function () {
+            let query = { id: 1 };
+            let table = "tab1";
+            let fields = ["a", "b", "c"];
+            let res = qh.createSelect(fields, table, query, ["a", "b desc"], 12);
+            assert.equal(res, "select a, b, c from tab1 where id = 1 order by a, b desc limit 12;");
         });
     });
 });

@@ -149,8 +149,8 @@ class MySqlCoordinator {
     }
     getTopologyInfo(uuid, callback) {
         let self = this;
-        let sql = "select uuid, status, worker, weight, enabled, worker_affinity, error, config from qtopology_topology where uuid = ?;";
-        self.query(sql, [uuid], (err, data) => {
+        let sql = qh.createSelect(["uuid", "status", "worker", "weight", "enabled", "worker_affinity", "error", "config"], table_names.qtopology_topology, { uuid: uuid });
+        self.query(sql, null, (err, data) => {
             if (err)
                 return callback(err);
             if (data.length == 0)
@@ -218,15 +218,18 @@ class MySqlCoordinator {
     }
     assignTopology(uuid, name, callback) {
         let sql = qh.createUpdate({ worker: name, status: "waiting" }, table_names.qtopology_topology, { uuid: uuid });
-        this.query(sql, null, callback);
+        sql += "call qtopology_sp_add_topology_history(?);";
+        this.query(sql, [uuid], callback);
     }
     setTopologyStatus(uuid, status, error, callback) {
         let sql = qh.createUpdate({ status: status, last_ping: new Date(), error: error }, table_names.qtopology_topology, { uuid: uuid });
-        this.query(sql, null, callback);
+        sql += "call qtopology_sp_add_topology_history(?);";
+        this.query(sql, [uuid], callback);
     }
     setWorkerStatus(name, status, callback) {
         let sql = qh.createUpdate({ status: status, last_ping: new Date() }, table_names.qtopology_worker, { name: name });
-        this.query(sql, null, callback);
+        sql += "call qtopology_sp_add_worker_history(?);";
+        this.query(sql, [name], callback);
     }
     registerTopology(uuid, config, callback) {
         let sql = "CALL qtopology_sp_register_topology(?, ?, ?, ?);";
@@ -316,7 +319,7 @@ class MySqlCoordinator {
     }
     getTopologyHistory(uuid, callback) {
         let self = this;
-        let sql = "select * from qtopology_topology_history where uuid = ? order by ts desc limit 100;";
+        let sql = qh.createSelect(["*"], table_names.qtopology_topology_history, { uuid: uuid }, ["ts desc"], 100);
         self.query(sql, [uuid], (err, data) => {
             if (err)
                 return callback(err);
@@ -339,7 +342,7 @@ class MySqlCoordinator {
     }
     getWorkerHistory(name, callback) {
         let self = this;
-        let sql = "select * from qtopology_worker_history where name = ? order by ts desc limit 100;";
+        let sql = qh.createSelect(["*"], table_names.qtopology_worker_history, { name: name }, ["ts desc"], 100);
         self.query(sql, [name], (err, data) => {
             if (err)
                 return callback(err);
