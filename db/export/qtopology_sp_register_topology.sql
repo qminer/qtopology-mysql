@@ -8,4 +8,5 @@ begin
         set config = p_config, weight = p_weight, worker_affinity = p_worker_affinity
         where uuid = p_uuid;
     end if;
+    call qtopology_sp_add_topology_history(p_uuid);
 end

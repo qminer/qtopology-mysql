@@ -4,6 +4,7 @@ begin
         update qtopology_worker
         set lstatus = '', lstatus_ts = NOW()
         where name = p_name;
+        call qtopology_sp_add_worker_history(p_name);
 
         select '' as status;
     
@@ -11,23 +12,26 @@ begin
         update qtopology_worker
         set lstatus = '', lstatus_ts = NOW()
         where name = p_name;
+        call qtopology_sp_add_worker_history(p_name);
 
         select '' as status;
 
     elseif exists(select * from qtopology_worker where name = p_name and lstatus = 'candidate') then
         update qtopology_worker
         set lstatus = ''
-        where name <> p_name;
+        where name <> p_name and lstatus <> '';
 
         update qtopology_worker
         set lstatus = 'leader', lstatus_ts = NOW()
         where name = p_name;
+        call qtopology_sp_add_worker_history(p_name);
 
         select 'leader' as status;
     else
         update qtopology_worker
         set lstatus = '', lstatus_ts = NOW()
         where name = p_name;
+        call qtopology_sp_add_worker_history(p_name);
 
         select '' as status;
     end if;
