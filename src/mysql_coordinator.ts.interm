@@ -8,6 +8,7 @@ import * as qtopology from "qtopology";
 
 import * as dbu from "./db_updater";
 import * as qh from "./query_helper";
+import * as rh from "./resources_helper";
 
 /////////////////////////////////////////////////////////////////////
 
@@ -17,6 +18,8 @@ export interface MySqlCoordinatorParams {
     database: string;
     user: string;
     password: string;
+    resources?: Map<string, string>;
+    pool?: mysql.IPool;
 }
 
 export interface MySqlTopologyManager {
@@ -42,11 +45,13 @@ export class MySqlCoordinator implements qtopology.CoordinationStorage {
     private pool: mysql.IPool;
     private name: string;
     private options: MySqlCoordinatorParams;
+    private resources: Map<string, string>;
 
     constructor(options: MySqlCoordinatorParams) {
         this.name = null; // this will be set later
         this.options = JSON.parse(JSON.stringify(options));
-        this.pool = mysql.createPool({
+        this.resources = options.resources || new rh.ResourcesHelper();
+        this.pool = options.pool || mysql.createPool({
             database: options.database,
             host: options.host,
             user: options.user,
@@ -86,14 +91,21 @@ export class MySqlCoordinator implements qtopology.CoordinationStorage {
     private query(sql: string, obj: any, callback: qtopology.SimpleResultCallback<any>) {
         try {
             this.log(`${sql} ${obj}`);
-            this.pool.query(sql, obj || [], callback);
+            this.pool.query(sql, obj || [], (err, data)=>{
+                if (err) {
+                    qtopology.logger().error("ERROR while executing: " + sql);
+                    qtopology.logger().error("params: " + JSON.stringify(obj));
+                    qtopology.logger().exception(err);
+                }
+                callback(err, data);
+            });
         } catch (e) {
             callback(e);
         }
     }
 
     getMessages(name: string, callback: qtopology.SimpleResultCallback<qtopology.StorageResultMessage[]>) {
-        let sql = "CALL qtopology_sp_messages_for_worker(?);";
+        let sql = this.resources.get("messages_for_worker");
         let self = this;
         self.query(sql, [name], (err, data) => {
             if (err) return callback(err);
@@ -116,7 +128,11 @@ export class MySqlCoordinator implements qtopology.CoordinationStorage {
     }
     getWorkerStatus(callback: qtopology.SimpleResultCallback<qtopology.WorkerStatus[]>) {
         let self = this;
-        let sql = "CALL qtopology_sp_leader_ping(?); CALL qtopology_sp_refresh_statuses();";
+        let sql =
+            self.resources.get("leader_ping") +
+            self.resources.get("disable_defunct_workers") +
+            self.resources.get("disable_defunct_leaders") +
+            self.resources.get("unassign_waiting_topologies");
         self.query(sql, [self.name], (err) => {
             if (err) return callback(err);
             sql = qh.createSelect(
@@ -145,7 +161,10 @@ export class MySqlCoordinator implements qtopology.CoordinationStorage {
 
     private getTopologyStatusInternal(sql: string, obj: any, callback: qtopology.SimpleResultCallback<qtopology.TopologyStatus[]>) {
         let self = this;
-        let xsql = "CALL qtopology_sp_refresh_statuses();";
+        let xsql =
+            self.resources.get("disable_defunct_workers") +
+            self.resources.get("disable_defunct_leaders") +
+            self.resources.get("unassign_waiting_topologies");
         self.query(xsql, null, (err) => {
             if (err) return callback(err);
             self.query(sql, obj, (err, data) => {
@@ -209,10 +228,13 @@ export class MySqlCoordinator implements qtopology.CoordinationStorage {
 
     getLeadershipStatus(callback: qtopology.SimpleResultCallback<qtopology.LeadershipResultStatus>) {
         let self = this;
-        let sql = "CALL qtopology_sp_refresh_statuses();";
+        let sql =
+            self.resources.get("disable_defunct_workers") +
+            self.resources.get("disable_defunct_leaders") +
+            self.resources.get("unassign_waiting_topologies");
         self.query(sql, null, (err) => {
             if (err) return callback(err);
-            sql = "CALL qtopology_sp_worker_statuses();";
+            sql = self.resources.get("worker_statuses");
             self.query(sql, null, (err, data) => {
                 if (err) return callback(err);
                 data = data[0];
@@ -227,24 +249,24 @@ export class MySqlCoordinator implements qtopology.CoordinationStorage {
         });
     }
     registerWorker(name: string, callback: qtopology.SimpleCallback) {
-        // this is called once at start-up and is the name of the worker that iuuses this coordination object
+        // this is called once at start-up and is the name of the worker that uses this coordination object
         // so we can save the name of the worker and use it later
-        let sql = "CALL qtopology_sp_register_worker(?);";
+        let sql = this.resources.get("register_worker");
         this.name = name;
         this.query(sql, [name], callback);
     }
     announceLeaderCandidacy(name: string, callback: qtopology.SimpleCallback) {
         let self = this;
-        let sql = "CALL qtopology_sp_disable_defunct_leaders();";
+        let sql = self.resources.get("disable_defunct_leaders");
         self.query(sql, null, (err) => {
             if (err) return callback(err);
-            let sql = "CALL qtopology_sp_announce_leader_candidacy(?);";
+            let sql = self.resources.get("announce_leader_candidacy");
             self.query(sql, [name], callback);
         });
     }
     checkLeaderCandidacy(name: string, callback: qtopology.SimpleResultCallback<boolean>) {
         let self = this;
-        let sql = "CALL qtopology_sp_check_leader_candidacy(?);";
+        let sql = this.resources.get("check_leader_candidacy");
         self.query(sql, [name], (err, data) => {
             if (err) return callback(err);
             callback(null, data && data.length > 0 && data[0].length > 0 && data[0][0].status == "leader");
@@ -252,22 +274,19 @@ export class MySqlCoordinator implements qtopology.CoordinationStorage {
     }
     assignTopology(uuid: string, name: string, callback: qtopology.SimpleCallback) {
         let sql = qh.createUpdate({ worker: name, status: "waiting" }, table_names.qtopology_topology, { uuid: uuid })
-        sql += "call qtopology_sp_add_topology_history(?);";
-        this.query(sql, [uuid], callback);
+        this.query(sql, null, callback);
     }
     setTopologyStatus(uuid: string, status: string, error: string, callback: qtopology.SimpleCallback) {
         let sql = qh.createUpdate({ status: status, last_ping: new Date(), error: error }, table_names.qtopology_topology, { uuid: uuid })
-        sql += "call qtopology_sp_add_topology_history(?);";
-        this.query(sql, [uuid], callback);
+        this.query(sql, null, callback);
     }
     setWorkerStatus(name: string, status: string, callback: qtopology.SimpleCallback) {
         let sql = qh.createUpdate({ status: status, last_ping: new Date() }, table_names.qtopology_worker, { name: name })
-        sql += "call qtopology_sp_add_worker_history(?);";
-        this.query(sql, [name], callback);
+        this.query(sql, null, callback);
     }
 
     registerTopology(uuid: string, config: any, callback: qtopology.SimpleCallback) {
-        let sql = "CALL qtopology_sp_register_topology(?, ?, ?, ?);";
+        let sql = this.resources.get("register_topology");
         let affinity = "";
         if (config.general.worker_affinity) {
             affinity = config.general.worker_affinity.join(",");
@@ -396,5 +415,15 @@ export class MySqlCoordinator implements qtopology.CoordinationStorage {
             });
             callback(null, data);
         });
+    }
+
+    private addTopologyHistory(uuid: string, callback: qtopology.SimpleCallback) {
+        let sql = this.resources.get("add_topology_history");
+        this.query(sql, [uuid], callback);
+    }
+
+    private addWorkerHistory(name: string, callback: qtopology.SimpleCallback) {
+        let sql = this.resources.get("add_worker_history");
+        this.query(sql, [name], callback);
     }
 }

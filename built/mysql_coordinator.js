@@ -218,15 +218,18 @@ class MySqlCoordinator {
     }
     assignTopology(uuid, name, callback) {
         let sql = qh.createUpdate({ worker: name, status: "waiting" }, table_names.qtopology_topology, { uuid: uuid });
-        this.query(sql, null, callback);
+        sql += "call qtopology_sp_add_topology_history(?);";
+        this.query(sql, [uuid], callback);
     }
     setTopologyStatus(uuid, status, error, callback) {
         let sql = qh.createUpdate({ status: status, last_ping: new Date(), error: error }, table_names.qtopology_topology, { uuid: uuid });
-        this.query(sql, null, callback);
+        sql += "call qtopology_sp_add_topology_history(?);";
+        this.query(sql, [uuid], callback);
     }
     setWorkerStatus(name, status, callback) {
         let sql = qh.createUpdate({ status: status, last_ping: new Date() }, table_names.qtopology_worker, { name: name });
-        this.query(sql, null, callback);
+        sql += "call qtopology_sp_add_worker_history(?);";
+        this.query(sql, [name], callback);
     }
     registerTopology(uuid, config, callback) {
         let sql = "CALL qtopology_sp_register_topology(?, ?, ?, ?);";

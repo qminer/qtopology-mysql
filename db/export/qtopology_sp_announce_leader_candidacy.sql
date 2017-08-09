@@ -4,5 +4,6 @@ begin
         update qtopology_worker
         set lstatus = 'candidate', lstatus_ts = NOW()
         where name = p_name;
+        call qtopology_sp_add_worker_history(p_name);
     end if;
 end
