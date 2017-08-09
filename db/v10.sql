@@ -1,17 +1,3 @@
--- drop procedure if exists qtopology_sp_add_topology_history;
--- drop procedure if exists qtopology_sp_add_worker_history;
--- drop procedure if exists qtopology_sp_announce_leader_candidacy;
--- drop procedure if exists qtopology_sp_check_leader_candidacy;
--- drop procedure if exists qtopology_sp_disable_defunct_leaders;
--- drop procedure if exists qtopology_sp_disable_defunct_workers;
--- drop procedure if exists qtopology_sp_leader_ping;
--- drop procedure if exists qtopology_sp_messages_for_worker;
--- drop procedure if exists qtopology_sp_refresh_statuses;
--- drop procedure if exists qtopology_sp_register_topology;
--- drop procedure if exists qtopology_sp_register_worker;
--- drop procedure if exists qtopology_sp_unassign_waiting_topologies;
--- drop procedure if exists qtopology_sp_worker_statuses;
-
 drop procedure if exists qtopology_sp_announce_leader_candidacy;
 CREATE  PROCEDURE qtopology_sp_announce_leader_candidacy(p_name varchar(100))
 begin
