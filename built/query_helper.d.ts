@@ -56,9 +56,11 @@ export declare function createUpdate(record: any, table: string, query: any): st
  */
 export declare function createDelete(table: string, query: any): string;
 /**
- * This method creates UPDATE statement for given object and given table.
+ * This method creates SELECT statement for given object and given table.
  * @param fields {string[]} - list of field names to retrieve
  * @param table {string} - name of the table where records should be updated
  * @param query {object} - query to find affected records.
+ * @param order_by {string[]} - optional list of field names to sort on ()
+ * @param limit {number} - optional nukmber of records to retrieve
  */
-export declare function createSelect(fields: string[], table: string, query: any): string;
+export declare function createSelect(fields: string[], table: string, query: any, order_by?: string[], limit?: number): string;

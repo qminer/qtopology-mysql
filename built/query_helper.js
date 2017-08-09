@@ -341,21 +341,26 @@ exports.createUpdate = createUpdate;
  * @param query {object} - query to find affected records.
  */
 function createDelete(table, query) {
-    let q_string = mapQuery(query) + ";";
+    let q_string = mapQuery(query);
     let sql = "delete from " + table + " " + q_string;
-    return sql;
+    return sql.trim() + ";";
 }
 exports.createDelete = createDelete;
 /**
- * This method creates UPDATE statement for given object and given table.
+ * This method creates SELECT statement for given object and given table.
  * @param fields {string[]} - list of field names to retrieve
  * @param table {string} - name of the table where records should be updated
  * @param query {object} - query to find affected records.
+ * @param order_by {string[]} - optional list of field names to sort on ()
+ * @param limit {number} - optional nukmber of records to retrieve
  */
-function createSelect(fields, table, query) {
-    let q_string = mapQuery(query) + ";";
-    let sql = "select " + fields.join(",") + " from " + table + " " + q_string;
-    return sql;
+function createSelect(fields, table, query, order_by, limit) {
+    let q_string = mapQuery(query);
+    let fields_s = fields.join(", ");
+    let order_by_s = (order_by ? "order by " + order_by.join(", ") : "");
+    let limit_s = (limit ? "limit " + limit : "");
+    let sql = `select ${fields_s} from ${table} ${q_string} ${order_by_s} ${limit_s}`;
+    return sql.trim() + ";";
 }
 exports.createSelect = createSelect;
 //# sourceMappingURL=query_helper.js.map

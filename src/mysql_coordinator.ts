@@ -184,8 +184,12 @@ export class MySqlCoordinator implements qtopology.CoordinationStorage {
     }
     getTopologyInfo(uuid: string, callback: qtopology.SimpleResultCallback<qtopology.TopologyInfoResponse>) {
         let self = this;
-        let sql = "select uuid, status, worker, weight, enabled, worker_affinity, error, config from qtopology_topology where uuid = ?;";
-        self.query(sql, [uuid], (err, data) => {
+        let sql = qh.createSelect(
+            ["uuid", "status", "worker", "weight", "enabled", "worker_affinity", "error", "config"],
+            table_names.qtopology_topology,
+            { uuid: uuid }
+        );
+        self.query(sql, null, (err, data) => {
             if (err) return callback(err);
             if (data.length == 0) return callback(new Error("Requested topology not found: " + uuid));
             let hit = data[0];
@@ -348,7 +352,9 @@ export class MySqlCoordinator implements qtopology.CoordinationStorage {
     }
     getTopologyHistory(uuid: string, callback: qtopology.SimpleResultCallback<qtopology.TopologyStatusHistory[]>) {
         let self = this;
-        let sql = "select * from qtopology_topology_history where uuid = ? order by ts desc limit 100;";
+        let sql = qh.createSelect(
+            ["*"], table_names.qtopology_topology_history,
+            { uuid: uuid }, ["ts desc"], 100);
         self.query(sql, [uuid], (err, data) => {
             if (err) return callback(err);
             let res: qtopology.TopologyStatusHistory[];
@@ -370,7 +376,9 @@ export class MySqlCoordinator implements qtopology.CoordinationStorage {
     }
     getWorkerHistory(name: string, callback: qtopology.SimpleResultCallback<qtopology.WorkerStatusHistory[]>) {
         let self = this;
-        let sql = "select * from qtopology_worker_history where name = ? order by ts desc limit 100;";
+        let sql = qh.createSelect(
+            ["*"], table_names.qtopology_worker_history,
+            { name: name }, ["ts desc"], 100);
         self.query(sql, [name], (err, data) => {
             if (err) return callback(err);
             let res: qtopology.WorkerStatusHistory[];
