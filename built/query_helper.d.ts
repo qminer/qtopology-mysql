@@ -21,14 +21,14 @@ export declare function createListOfSetValues(record: any): string;
  * that correspond to properties of the object.
  * @param record {object} - record to be inspected
  */
-export declare function createListOfFieldsRaw(record: any): any[];
+export declare function createListOfFieldsRaw(record: any): string[];
 /**
  * This method maps given record into an array of values that correspond to
  * field names, provided in parameter.
  * @param record {object} - record to be mapped
  * @param field_list {array} - list of field names
  */
-export declare function mapObjectToArrayOfFields(record: any, field_list: any): any[];
+export declare function mapObjectToArrayOfFields(record: any, field_list: string[]): any[];
 /**
  * This method creates INSERT statement for given object and given table.
  * @param record {object} - record to be inserted

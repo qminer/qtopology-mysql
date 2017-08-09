@@ -33,7 +33,7 @@ let objectToString = objectProto.toString;
  * @param {*} value The value to check.
  * @returns {boolean} Returns `true` if `value` is a host object, else `false`.
  */
-function isHostObject(value) {
+function isHostObject(value: any): boolean {
     // Many host objects are `Object` objects that can coerce to strings
     // despite having improperly defined `toString` methods.
     let result = false;
@@ -51,7 +51,7 @@ function isHostObject(value) {
 /**
  * This method check if given value is plain object
  */
-function isPlainObject(value) {
+function isPlainObject(value: any): boolean {
     if (!isObjectLike(value) || objectToString.call(value) != objectTag || isHostObject(value)) {
         return false;
     }
@@ -66,7 +66,7 @@ function isPlainObject(value) {
 /**
  * Utility method that escapes string for SQL.
  */
-function _escapeString(val) {
+function _escapeString(val: string): string {
     val = val.replace(/[\0\n\r\b\t\\'\x1a]/g, function (s) {
         switch (s) {
             case "\0": return "\\0";
@@ -86,7 +86,7 @@ function _escapeString(val) {
  * This function formats given value into proper SQL.
  * @param value {object} - condition value
  */
-function format(value) {
+function format(value: any): string {
     if (value == null) {
         return "NULL";
     }
@@ -103,7 +103,7 @@ function format(value) {
  * This function formats given array of values into proper SQL.
  * @param value {array} - array of value
  */
-function formatList(value) {
+function formatList(value: Array<any>): string {
     let res = value.map(function (x) { return format(x); });
     return "(" + res.join(",") + ")";
 }
@@ -113,7 +113,7 @@ function formatList(value) {
  * @param key {object} - condition name (field). Can be null.
  * @param value {object} - condition value
  */
-function processSingle(key, value) {
+function processSingle(key: string, value: any): string {
     let comparatorMap = {
         $eq: '=',
         $ne: '<>',
@@ -184,7 +184,7 @@ function processSingle(key, value) {
  * @param obj {object} - complex query object or array
  * @param operator {string} - operator that should combine the detected conditions. Optional, default is AND.
  */
-function processObj(obj: any, operator: string) {
+function processObj(obj: any, operator: string): string {
     let is_array = Array.isArray(obj);
     if (
         (is_array && obj.length === 0) ||
@@ -221,7 +221,7 @@ function processObj(obj: any, operator: string) {
  * Helper function that creates complex WHERE statement as string from given object
  * @param q {object} - complex query object
  */
-export function mapQuery(q: any) {
+export function mapQuery(q: any): string {
     let query = processObj(q, null);
     if (query && query.length) {
         return 'where ' + query;
@@ -237,7 +237,7 @@ export function mapQuery(q: any) {
  * that correspond to properties of the object.
  * @param record {object} - record to be inspected
  */
-export function createListOfFields(record) {
+export function createListOfFields(record: any): string {
     let fields = [];
     for (let i in record) {
         fields.push(i);
@@ -250,7 +250,7 @@ export function createListOfFields(record) {
  * that correspond to properties of the object.
  * @param record {object} - record to be inspected
  */
-export function createListOfFieldValues(record) {
+export function createListOfFieldValues(record: any): string {
     let str = "";
     for (let i in record) {
         str += i + "=values(" + i + "), ";
@@ -258,7 +258,7 @@ export function createListOfFieldValues(record) {
     return str.substring(0, str.length - 2);
 }
 
-export function createListOfSetValues(record) {
+export function createListOfSetValues(record: any): string {
     let str = "";
     for (let i in record) {
         str += i + "=" + format(record[i]) + ",";
@@ -271,7 +271,7 @@ export function createListOfSetValues(record) {
  * that correspond to properties of the object.
  * @param record {object} - record to be inspected
  */
-export function createListOfFieldsRaw(record) {
+export function createListOfFieldsRaw(record: any): string[] {
     let fields = [];
     for (let i in record) {
         fields.push(i);
@@ -285,7 +285,7 @@ export function createListOfFieldsRaw(record) {
  * @param record {object} - record to be mapped
  * @param field_list {array} - list of field names
  */
-export function mapObjectToArrayOfFields(record, field_list) {
+export function mapObjectToArrayOfFields(record: any, field_list: string[]) {
     let result = [];
     for (let i in field_list) {
         result.push(record[field_list[i]]);
@@ -300,7 +300,7 @@ export function mapObjectToArrayOfFields(record, field_list) {
  * @param record {object} - record to be inserted
  * @param table {string} - name of the table to insert into
  */
-export function createInsert(record: any, table: string) {
+export function createInsert(record: any, table: string): string {
     let vals_a = [];
     for (let i in record) {
         vals_a.push(format(record[i]));
@@ -316,7 +316,7 @@ export function createInsert(record: any, table: string) {
  * @param table {string} - name of the table to upsert into
  * @param field {string} - name of the field that is to de used to determine existing record
  */
-export function createUpsert(record: any, table: string, field: string) {
+export function createUpsert(record: any, table: string, field: string): string {
     let vals_a = [];
     for (let i in record) {
         vals_a.push(format(record[i]));
@@ -332,7 +332,7 @@ export function createUpsert(record: any, table: string, field: string) {
  * @param table {string} - name of the table where records should be updated
  * @param query {object} - query to find affected records.
  */
-export function createUpdate(record: any, table: string, query: any) {
+export function createUpdate(record: any, table: string, query: any): string {
     let vals_a = [];
     for (let i in record) {
         if (i === "id" && !query) {
@@ -356,7 +356,7 @@ export function createUpdate(record: any, table: string, query: any) {
  * @param table {string} - name of the table where records should be updated
  * @param query {object} - query to find affected records.
  */
-export function createDelete(table: string, query: any) {
+export function createDelete(table: string, query: any): string {
     let q_string = mapQuery(query) + ";";
     let sql = "delete from " + table + " " + q_string;
     return sql;
@@ -368,7 +368,7 @@ export function createDelete(table: string, query: any) {
  * @param table {string} - name of the table where records should be updated
  * @param query {object} - query to find affected records.
  */
-export function createSelect(fields: string[], table: string, query: any) {
+export function createSelect(fields: string[], table: string, query: any): string {
     let q_string = mapQuery(query) + ";";
     let sql = "select " + fields.join(",") + " from " + table + " " + q_string;
     return sql;
