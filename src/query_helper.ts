@@ -306,8 +306,8 @@ export function createInsert(record: any, table: string): string {
         vals_a.push(format(record[i]));
     }
     let vals = vals_a.join(", ");
-    let sql = "insert into " + table + "(" + createListOfFields(record) + ") values (" + vals + ");";
-    return sql;
+    let sql = `insert into ${table}(${createListOfFields(record)}) values (${vals})`;
+    return sql.trim() + ";";
 }
 
 /**
@@ -347,7 +347,7 @@ export function createUpdate(record: any, table: string, query: any): string {
     } else {
         q_string = "where id = " + format(record.id) + ";";
     }
-    let sql = "update " + table + " set " + vals + " " + q_string;
+    let sql = `update ${table} set ${vals} ${q_string}`;
     return sql;
 }
 
@@ -358,7 +358,7 @@ export function createUpdate(record: any, table: string, query: any): string {
  */
 export function createDelete(table: string, query: any): string {
     let q_string = mapQuery(query);
-    let sql = "delete from " + table + " " + q_string;
+    let sql = `delete from ${table} ${q_string}`;
     return sql.trim() + ";";
 }
 
