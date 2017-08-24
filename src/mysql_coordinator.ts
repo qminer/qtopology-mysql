@@ -97,10 +97,11 @@ export class MySqlCoordinator implements qtopology.CoordinationStorage {
         let self = this;
         self.query(sql, [name], (err, data) => {
             if (err) return callback(err);
-            let res = [];
+            let res: qtopology.StorageResultMessage[];
+            res = [];
             let ids_to_delete = [];
             for (let rec of data[0]) {
-                res.push({ cmd: rec.cmd, content: JSON.parse(rec.content) });
+                res.push({ cmd: rec.cmd, content: JSON.parse(rec.content), created: rec.created });
                 ids_to_delete.push(rec.id);
             }
             async.each(
@@ -303,7 +304,9 @@ export class MySqlCoordinator implements qtopology.CoordinationStorage {
     }
 
     sendMessageToWorker(worker: string, cmd: string, content: any, callback: qtopology.SimpleCallback) {
-        let sql = qh.createInsert({ worker: worker, cmd: cmd, content: JSON.stringify(content) }, table_names.qtopology_message)
+        let sql = qh.createInsert(
+            { worker: worker, cmd: cmd, content: JSON.stringify(content), created: new Date() },
+            table_names.qtopology_message)
         this.query(sql, null, callback);
     }
 
