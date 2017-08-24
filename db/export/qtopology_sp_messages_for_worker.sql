@@ -4,7 +4,7 @@ begin
     set last_ping = NOW()
     where name = p_name;
 
-    select id, cmd, content
+    select id, cmd, content, created
     from qtopology_message
     where worker = p_name
     order by id;
