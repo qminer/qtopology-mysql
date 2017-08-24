@@ -1,7 +1,7 @@
 # qtopology-mysql
 
 [![npm](https://img.shields.io/npm/v/qtopology-mysql.svg)]()
-![Build status](https://travis-ci.org/qminer/qtopology-mysql.svg?branch=master "Travis CI status")
+[![Build status](https://img.shields.io/travis/bergloman/qtopology-mysql/master.svg)]()
 
 This package contains coordination-storage plugin for [QTopology](http://github.com/qminer/qtopology) that uses `MySQL` database to store and manipulate coordination data.
 
