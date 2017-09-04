@@ -1,3 +1,5 @@
+delete from qtopology_message;
+
 alter table qtopology_message
     add column created datetime not null;
 
