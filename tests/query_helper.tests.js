@@ -27,6 +27,11 @@ describe('Query helper', function () {
             let res = qh.mapQuery(q);
             assert.equal(res, "where b like '%aaa%'");
         });
+        it('should handle $in', function () {
+            let q = { b: { $in: ["x1", "x2", "x3"]} };
+            let res = qh.mapQuery(q);
+            assert.equal(res, "where b in ('x1','x2','x3')");
+        });
         it('should handle $gt', function () {
             let q = { b: { $gt: "aaa"} };
             let res = qh.mapQuery(q);
