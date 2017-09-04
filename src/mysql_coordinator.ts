@@ -228,7 +228,7 @@ export class MySqlCoordinator implements qtopology.CoordinationStorage {
         });
     }
     registerWorker(name: string, callback: qtopology.SimpleCallback) {
-        // this is called once at start-up and is the name of the worker that iuuses this coordination object
+        // this is called once at start-up and is the name of the worker that uses this coordination object
         // so we can save the name of the worker and use it later
         let sql = "CALL qtopology_sp_register_worker(?);";
         this.name = name;
