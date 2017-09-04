@@ -217,18 +217,18 @@ export class MySqlCoordinator implements qtopology.CoordinationStorage {
             self.query(sql, null, (err, data) => {
                 if (err) return callback(err);
                 data = data[0];
-                let hits = data.filter(x => x.lstatus == "leader");
-                if (hits.length > 0 && hits[0].cnt > 0) return callback(null, { leadership: "ok" });
+                let hits = data.filter(x => x.lstatus == qtopology.Consts.WorkerLStatus.leader);
+                if (hits.length > 0 && hits[0].cnt > 0) return callback(null, { leadership: qtopology.Consts.LeadershipStatus.ok });
 
-                hits = data.filter(x => x.lstatus == "candidate");
-                if (hits.length > 0 && hits[0].cnt > 0) return callback(null, { leadership: "pending" });
+                hits = data.filter(x => x.lstatus == qtopology.Consts.WorkerLStatus.candidate);
+                if (hits.length > 0 && hits[0].cnt > 0) return callback(null, { leadership: qtopology.Consts.LeadershipStatus.pending });
 
-                callback(null, { leadership: "vacant" });
+                callback(null, { leadership: qtopology.Consts.LeadershipStatus.vacant });
             });
         });
     }
     registerWorker(name: string, callback: qtopology.SimpleCallback) {
-        // this is called once at start-up and is the name of the worker that iuuses this coordination object
+        // this is called once at start-up and is the name of the worker that uses this coordination object
         // so we can save the name of the worker and use it later
         let sql = "CALL qtopology_sp_register_worker(?);";
         this.name = name;
@@ -248,11 +248,11 @@ export class MySqlCoordinator implements qtopology.CoordinationStorage {
         let sql = "CALL qtopology_sp_check_leader_candidacy(?);";
         self.query(sql, [name], (err, data) => {
             if (err) return callback(err);
-            callback(null, data && data.length > 0 && data[0].length > 0 && data[0][0].status == "leader");
+            callback(null, data && data.length > 0 && data[0].length > 0 && data[0][0].status == qtopology.Consts.WorkerLStatus.leader);
         });
     }
     assignTopology(uuid: string, name: string, callback: qtopology.SimpleCallback) {
-        let sql = qh.createUpdate({ worker: name, status: "waiting" }, table_names.qtopology_topology, { uuid: uuid })
+        let sql = qh.createUpdate({ worker: name, status:qtopology.Consts.TopologyStatus.waiting }, table_names.qtopology_topology, { uuid: uuid })
         sql += "call qtopology_sp_add_topology_history(?);";
         this.query(sql, [uuid], callback);
     }
@@ -327,10 +327,10 @@ export class MySqlCoordinator implements qtopology.CoordinationStorage {
         self.getTopologyInfo(uuid, (err, data) => {
             if (err) return callback(err);
             let hit = data;
-            if (hit.status != "error") {
+            if (hit.status != qtopology.Consts.TopologyStatus.error) {
                 return callback(new Error("Specified topology is not marked as error: " + uuid));
             }
-            self.setTopologyStatus(uuid, "unassigned", null, callback);
+            self.setTopologyStatus(uuid, qtopology.Consts.TopologyStatus.unassigned, null, callback);
             callback();
         });
     }
@@ -341,8 +341,8 @@ export class MySqlCoordinator implements qtopology.CoordinationStorage {
             if (err) return callback(err);
             let hits = data.filter(x => x.name == name);
             if (hits.length > 0) {
-                if (hits[0].status == "unloaded") {
-                    let sql = qh.createDelete(table_names.qtopology_worker, { name: name, status: "unlodaded" })
+                if (hits[0].status == qtopology.Consts.WorkerStatus.unloaded) {
+                    let sql = qh.createDelete(table_names.qtopology_worker, { name: name, status: qtopology.Consts.WorkerStatus.unloaded })
                     self.query(sql, null, callback);
                 } else {
                     callback(new Error("Specified worker is not unloaded and cannot be deleted."));
