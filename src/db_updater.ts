@@ -8,20 +8,32 @@ import * as qtopology from "qtopology";
 
 /////////////////////////////////////////////////////////////////////////
 
+/**
+ * Internal class for storing data about upgrade-script file.
+ */
 class FileRec {
     file: string;
     file_short: string;
     ver: number;
 }
 
+/**
+ * Simple callback.
+ */
 export interface SimpleResultCallback<T> {
     (error?: Error, data?: T): void;
 }
 
+/**
+ * Database connection.
+ */
 export interface Connection {
     query(script: string, callback: SimpleResultCallback<any[]>);
 }
 
+/**
+ * Options for automatic DB upgrade
+ */
 export interface DbUpgraderOptions {
     scripts_dir: string;
     conn: Connection;
@@ -29,6 +41,9 @@ export interface DbUpgraderOptions {
     version_record_key: string;
 }
 
+/**
+ * This class handles automatic upgrades of underlaying database.
+ */
 export class DbUpgrader {
 
     private scripts_dir: string;
