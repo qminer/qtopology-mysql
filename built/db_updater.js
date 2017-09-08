@@ -6,8 +6,14 @@ const path = require("path");
 const glob = require("glob");
 const qtopology = require("qtopology");
 /////////////////////////////////////////////////////////////////////////
+/**
+ * Internal class for storing data about upgrade-script file.
+ */
 class FileRec {
 }
+/**
+ * This class handles automatic upgrades of underlaying database.
+ */
 class DbUpgrader {
     /** Simple constructor */
     constructor(options) {
