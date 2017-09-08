@@ -1,4 +1,6 @@
-CREATE  PROCEDURE `qtopology_sp_register_topology`(p_uuid varchar(100), p_config mediumtext, p_weight float, p_worker_affinity varchar(200))
+drop procedure qtopology_sp_register_topology;
+
+create procedure qtopology_sp_register_topology(p_uuid varchar(100), p_config mediumtext, p_weight float, p_worker_affinity varchar(200))
 begin
     if not exists(select * from qtopology_topology where uuid = p_uuid) then
         insert into qtopology_topology(uuid, config, status, worker, weight, worker_affinity, last_ping, error, enabled)
