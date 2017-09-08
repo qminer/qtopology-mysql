@@ -1,15 +1,27 @@
+/**
+ * Simple callback.
+ */
 export interface SimpleResultCallback<T> {
     (error?: Error, data?: T): void;
 }
+/**
+ * Database connection.
+ */
 export interface Connection {
     query(script: string, callback: SimpleResultCallback<any[]>): any;
 }
+/**
+ * Options for automatic DB upgrade
+ */
 export interface DbUpgraderOptions {
     scripts_dir: string;
     conn: Connection;
     settings_table: string;
     version_record_key: string;
 }
+/**
+ * This class handles automatic upgrades of underlaying database.
+ */
 export declare class DbUpgrader {
     private scripts_dir;
     private conn;
