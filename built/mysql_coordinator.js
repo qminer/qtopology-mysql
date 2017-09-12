@@ -243,11 +243,13 @@ class MySqlCoordinator {
     }
     disableTopology(uuid, callback) {
         let sql = qh.createUpdate({ enabled: 0 }, table_names.qtopology_topology, { uuid: uuid });
-        this.query(sql, null, callback);
+        sql += "call qtopology_sp_add_topology_history(?);";
+        this.query(sql, [uuid], callback);
     }
     enableTopology(uuid, callback) {
         let sql = qh.createUpdate({ enabled: 1 }, table_names.qtopology_topology, { uuid: uuid });
-        this.query(sql, null, callback);
+        sql += "call qtopology_sp_add_topology_history(?);";
+        this.query(sql, [uuid], callback);
     }
     deleteTopology(uuid, callback) {
         let sql = qh.createDelete(table_names.qtopology_topology, { uuid: uuid });
