@@ -294,7 +294,6 @@ class MySqlCoordinator {
                 return callback(new Error("Specified topology is not marked as error: " + uuid));
             }
             self.setTopologyStatus(uuid, qtopology.Consts.TopologyStatus.unassigned, null, callback);
-            callback();
         });
     }
     deleteWorker(name, callback) {
