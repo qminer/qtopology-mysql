@@ -281,11 +281,13 @@ export class MySqlCoordinator implements qtopology.CoordinationStorage {
     }
     disableTopology(uuid: string, callback: qtopology.SimpleCallback) {
         let sql = qh.createUpdate({ enabled: 0 }, table_names.qtopology_topology, { uuid: uuid })
-        this.query(sql, null, callback);
+        sql += "call qtopology_sp_add_topology_history(?);";
+        this.query(sql, [uuid], callback);
     }
     enableTopology(uuid: string, callback: qtopology.SimpleCallback) {
         let sql = qh.createUpdate({ enabled: 1 }, table_names.qtopology_topology, { uuid: uuid })
-        this.query(sql, null, callback);
+        sql += "call qtopology_sp_add_topology_history(?);";
+        this.query(sql, [uuid], callback);
     }
     deleteTopology(uuid: string, callback: qtopology.SimpleCallback) {
         let sql = qh.createDelete(table_names.qtopology_topology, { uuid: uuid })
@@ -331,7 +333,6 @@ export class MySqlCoordinator implements qtopology.CoordinationStorage {
                 return callback(new Error("Specified topology is not marked as error: " + uuid));
             }
             self.setTopologyStatus(uuid, qtopology.Consts.TopologyStatus.unassigned, null, callback);
-            callback();
         });
     }
 
