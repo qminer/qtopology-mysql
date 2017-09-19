@@ -319,7 +319,7 @@ export class MySqlCoordinator implements qtopology.CoordinationStorage {
             if (!data.worker) return callback();
             self.disableTopology(uuid, (err) => {
                 if (err) return callback(err);
-                self.sendMessageToWorker(data.worker, "stop-topology", { uuid: uuid }, callback);
+                self.sendMessageToWorker(data.worker, qtopology.Consts.LeaderMessages.stop_topology, { uuid: uuid }, callback);
             });
         });
     }
@@ -355,7 +355,7 @@ export class MySqlCoordinator implements qtopology.CoordinationStorage {
     }
 
     shutDownWorker(name: string, callback: qtopology.SimpleCallback) {
-        this.sendMessageToWorker(name, "shutdown", {}, callback);
+        this.sendMessageToWorker(name, qtopology.Consts.LeaderMessages.shutdown, {}, callback);
     }
     getTopologyHistory(uuid: string, callback: qtopology.SimpleResultCallback<qtopology.TopologyStatusHistory[]>) {
         let self = this;

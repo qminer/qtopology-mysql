@@ -280,7 +280,7 @@ class MySqlCoordinator {
             self.disableTopology(uuid, (err) => {
                 if (err)
                     return callback(err);
-                self.sendMessageToWorker(data.worker, "stop-topology", { uuid: uuid }, callback);
+                self.sendMessageToWorker(data.worker, qtopology.Consts.LeaderMessages.stop_topology, { uuid: uuid }, callback);
             });
         });
     }
@@ -317,7 +317,7 @@ class MySqlCoordinator {
         });
     }
     shutDownWorker(name, callback) {
-        this.sendMessageToWorker(name, "shutdown", {}, callback);
+        this.sendMessageToWorker(name, qtopology.Consts.LeaderMessages.shutdown, {}, callback);
     }
     getTopologyHistory(uuid, callback) {
         let self = this;
