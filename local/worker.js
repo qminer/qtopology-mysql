@@ -5,7 +5,7 @@ const fs = require("fs");
 const coor = require("../");
 
 let config = JSON.parse(fs.readFileSync("config.json", "utf8"));
-let coordinator = new coor.MySqlCoordinator(config);
+let storage = new coor.MySqlStorage(config);
 
 ///////////////////////////////////////////////////////////////////////
 
@@ -14,12 +14,12 @@ cmdln
     .define('n', 'name', 'worker1', 'Logical name of the worker');
 let opts = cmdln.process(process.argv);
 let w = null;
-coordinator.init((err) => {
+storage.init((err) => {
     if (err) {
         console.log(err);
         return;
     }
-    let w = new qtopology.TopologyWorker(opts.name, coordinator);
+    let w = new qtopology.TopologyWorker(opts.name, storage);
     w.run();
     setTimeout(() => { shutdown(); }, 200000);
 })
