@@ -5,7 +5,7 @@ const coor = require("../");
 
 let config = JSON.parse(fs.readFileSync("config.json", "utf8"));
 
-let coordinator = new coor.MySqlCoordinator(config);
+let storage = new coor.MySqlStorage(config);
 
 const worker_name = "worker1";
 let topology_config = JSON.parse(fs.readFileSync("./topology.json", "utf8"));
@@ -15,142 +15,142 @@ topology_config.general.uuid = uuid;
 async.series(
     [
         (xcallback) => {
-            coordinator.init(xcallback);
+            storage.init(xcallback);
         },
         (xcallback) => {
-            coordinator.getWorkerStatus((err, data) => {
+            storage.getWorkerStatus((err, data) => {
                 console.log("getWorkerStatus", err, data);
                 xcallback();
             });
         },
         (xcallback) => {
             console.log("Registering worker");
-            coordinator.registerWorker(worker_name, xcallback);
+            storage.registerWorker(worker_name, xcallback);
         },
         (xcallback) => {
-            coordinator.getWorkerStatus((err, data) => {
+            storage.getWorkerStatus((err, data) => {
                 console.log("getWorkerStatus", err, data);
                 xcallback();
             });
         },
         (xcallback) => {
-            coordinator.getLeadershipStatus((err, data) => {
+            storage.getLeadershipStatus((err, data) => {
                 console.log("getLeadershipStatus", err, data);
                 xcallback();
             });
         },
         (xcallback) => {
             console.log("Registering topology");
-            coordinator.registerTopology(topology_config, true, (err, data) => {
+            storage.registerTopology(topology_config, true, (err, data) => {
                 xcallback();
             });
         },
         (xcallback) => {
-            coordinator.getTopologyStatus((err, data) => {
+            storage.getTopologyStatus((err, data) => {
                 console.log("getTopologyStatus", err, data);
                 xcallback();
             });
         },
         (xcallback) => {
             console.log("Assigning topology");
-            coordinator.assignTopology(uuid, worker_name, xcallback);
+            storage.assignTopology(uuid, worker_name, xcallback);
         },
         (xcallback) => {
-            coordinator.getTopologyStatus((err, data) => {
+            storage.getTopologyStatus((err, data) => {
                 console.log("getTopologyStatus", err, data);
                 xcallback();
             });
         },
         (xcallback) => {
-            coordinator.getMessages(worker_name, (err, data) => {
+            storage.getMessages(worker_name, (err, data) => {
                 console.log("getMessages", err, data);
                 xcallback();
             });
         },
 
         (xcallback) => {
-            coordinator.getWorkerStatus((err, data) => {
+            storage.getWorkerStatus((err, data) => {
                 console.log("getWorkerStatus", err, data);
                 xcallback();
             });
         },
         (xcallback) => {
             console.log("Announcing leadership candidacy");
-            coordinator.announceLeaderCandidacy(worker_name, (err) => {
+            storage.announceLeaderCandidacy(worker_name, (err) => {
                 console.log("announceLeaderCandidacy", err);
                 xcallback();
             });
         },
         (xcallback) => {
-            coordinator.getWorkerStatus((err, data) => {
+            storage.getWorkerStatus((err, data) => {
                 console.log("getWorkerStatus", err, data);
                 xcallback();
             });
         },
         (xcallback) => {
-            coordinator.getLeadershipStatus((err, data) => {
+            storage.getLeadershipStatus((err, data) => {
                 console.log("getLeadershipStatus", err, data);
                 xcallback();
             });
         },
         (xcallback) => {
             console.log("Check leadership candidacy");
-            coordinator.checkLeaderCandidacy(worker_name, (err, data) => {
+            storage.checkLeaderCandidacy(worker_name, (err, data) => {
                 console.log("checkLeaderCandidacy", err, data);
                 xcallback();
             });
         },
         (xcallback) => {
-            coordinator.getWorkerStatus((err, data) => {
+            storage.getWorkerStatus((err, data) => {
                 console.log("getWorkerStatus", err, data);
                 xcallback();
             });
         },
         (xcallback) => {
-            coordinator.getLeadershipStatus((err, data) => {
+            storage.getLeadershipStatus((err, data) => {
                 console.log("getLeadershipStatus", err, data);
                 xcallback();
             });
         },
         (xcallback) => {
             console.log("Setting worker status");
-            coordinator.setWorkerStatus(worker_name, "dead", (err) => {
+            storage.setWorkerStatus(worker_name, "dead", (err) => {
                 xcallback();
             });
         },
         (xcallback) => {
-            coordinator.getWorkerStatus((err, data) => {
+            storage.getWorkerStatus((err, data) => {
                 console.log("getWorkerStatus", err, data);
                 xcallback();
             });
         },
         (xcallback) => {
-            coordinator.getLeadershipStatus((err, data) => {
+            storage.getLeadershipStatus((err, data) => {
                 console.log("getLeadershipStatus", err, data);
                 xcallback();
             });
         },
         (xcallback) => {
-            coordinator.getTopologyStatus((err, data) => {
+            storage.getTopologyStatus((err, data) => {
                 console.log("getTopologyStatus", err, data);
                 xcallback();
             });
         },
         (xcallback) => {
             console.log("Setting worker status");
-            coordinator.setWorkerStatus(worker_name, "alive", (err) => {
+            storage.setWorkerStatus(worker_name, "alive", (err) => {
                 xcallback();
             });
         },
         (xcallback) => {
             console.log("Setting topology status to running");
-            coordinator.setTopologyStatus(uuid, "running", null, (err) => {
+            storage.setTopologyStatus(uuid, "running", null, (err) => {
                 console.log("setTopologyStatus", err);
                 xcallback();
             });
         },
         (xcallback) => {
-            coordinator.getTopologyStatus((err, data) => {
+            storage.getTopologyStatus((err, data) => {
                 console.log("getTopologyStatus", err, data);
                 xcallback();
             });
@@ -161,7 +161,7 @@ async.series(
             console.log("Error occured:", err);
         }
         console.log("Closing coordinator...");
-        coordinator.close(() => {
+        storage.close(() => {
             console.log("Done.");
         });
     }
@@ -172,7 +172,7 @@ function shutdown(err) {
         console.log("Error", err);
     }
     console.log("Closing coordinator...");
-    coordinator.close(() => {
+    storage.close(() => {
         console.log("Done.");
     });
 }

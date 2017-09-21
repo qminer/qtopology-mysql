@@ -2,8 +2,8 @@
   "name": "qtopology-mysql",
   "version": "1.0.7",
   "description": "MySQL-based coordination storage for QTopology",
-  "main": "built/mysql_coordinator.js",
-  "typings": "./built/mysql_coordinator",
+  "main": "built/mysql_storage.js",
+  "typings": "./built/mysql_storage",
   "repository": "https://github.com/qminer/qtopology-mysql.git",
   "keywords": [
     "node.js"
@@ -30,6 +30,6 @@
     "async": "^1.5.2",
     "glob": "^7.1.1",
     "mysql": "^2.12.0",
-    "qtopology": "^0.14.5"
+    "qtopology": "^0.16.0"
   }
 }
