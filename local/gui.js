@@ -8,8 +8,8 @@ qtopology.logger().setLevel("normal");
 
 let config = JSON.parse(fs.readFileSync("config.json", "utf8"));
 
-let coordinator = new coor.MySqlCoordinator(config);
+let storage = new coor.MySqlStorage(config);
 let server = new qtopology.DashboardServer();
-server.init(3000, coordinator, function () {
+server.init(3000, storage, function () {
     server.run();
 });

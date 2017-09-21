@@ -1,5 +1,5 @@
 import * as qtopology from "qtopology";
-export interface MySqlCoordinatorParams {
+export interface MySqlStorageParams {
     host: string;
     port: number;
     database: string;
@@ -9,11 +9,11 @@ export interface MySqlCoordinatorParams {
 export interface MySqlTopologyManager {
     insert(uuid: string, config: any, overwrite: boolean, callback: qtopology.SimpleCallback): any;
 }
-export declare class MySqlCoordinator implements qtopology.CoordinationStorage {
+export declare class MySqlStorage implements qtopology.CoordinationStorage {
     private pool;
     private name;
     private options;
-    constructor(options: MySqlCoordinatorParams);
+    constructor(options: MySqlStorageParams);
     init(callback: qtopology.SimpleCallback): void;
     close(callback: qtopology.SimpleCallback): void;
     private log(s);

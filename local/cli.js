@@ -6,11 +6,11 @@ const qtopology = require("qtopology");
 qtopology.logger().setLevel("normal");
 
 let config = JSON.parse(fs.readFileSync("config.json", "utf8"));
-let coordinator = new coor.MySqlCoordinator(config);
+let storage = new coor.MySqlStorage(config);
 
-let cmd = new qtopology.CommandLineHandler(coordinator);
+let cmd = new qtopology.CommandLineHandler(storage);
 cmd.run(() => {
-    coordinator.close(() => {
+    storage.close(() => {
         qtopology.logger().log("Done.");
      })
 });
