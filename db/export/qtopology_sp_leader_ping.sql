@@ -3,4 +3,8 @@ begin
     update qtopology_worker
     set status = 'alive', lstatus_ts = NOW(), last_ping = NOW()
     where name = p_name and lstatus = 'leader';
+    
+    update qtopology_worker
+    set status = 'alive', last_ping = NOW()
+    where name = p_name and lstatus <> 'leader';
 end

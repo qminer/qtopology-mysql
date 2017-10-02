@@ -5,5 +5,5 @@ begin
 
     update qtopology_worker
     set status = 'dead'
-    where status = 'alive' and last_ping < p_min_date;
+    where status in ('alive', 'closing') and last_ping < p_min_date;    
 end
