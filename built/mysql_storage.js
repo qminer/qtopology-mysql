@@ -218,7 +218,7 @@ class MySqlStorage {
         });
     }
     assignTopology(uuid, name, callback) {
-        let sql = qh.createUpdate({ worker: name, status: qtopology.Consts.TopologyStatus.waiting }, table_names.qtopology_topology, { uuid: uuid });
+        let sql = qh.createUpdate({ worker: name, last_ping: new Date(), status: qtopology.Consts.TopologyStatus.waiting }, table_names.qtopology_topology, { uuid: uuid });
         sql += "call qtopology_sp_add_topology_history(?);";
         this.query(sql, [uuid], callback);
     }

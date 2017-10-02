@@ -252,7 +252,7 @@ export class MySqlStorage implements qtopology.CoordinationStorage {
         });
     }
     assignTopology(uuid: string, name: string, callback: qtopology.SimpleCallback) {
-        let sql = qh.createUpdate({ worker: name, status:qtopology.Consts.TopologyStatus.waiting }, table_names.qtopology_topology, { uuid: uuid })
+        let sql = qh.createUpdate({ worker: name, last_ping: new Date(), status: qtopology.Consts.TopologyStatus.waiting }, table_names.qtopology_topology, { uuid: uuid })
         sql += "call qtopology_sp_add_topology_history(?);";
         this.query(sql, [uuid], callback);
     }
@@ -400,5 +400,62 @@ export class MySqlStorage implements qtopology.CoordinationStorage {
             });
             callback(null, data);
         });
+    }
+
+    private disableDefunctWorkers(callback: qtopology.SimpleCallback) {
+        let self = this;
+        self.getWorkerStatus((err, data) => {
+            if (err) return callback(err);
+            let limit = Date.now() - 30 * 1000;
+            async.each(
+                data,
+                (worker:qtopology.WorkerStatus, xcallback)=> {
+                    if (worker.status != qtopology.Consts.WorkerStatus.alive) return xcallback();
+                    if (worker.last_ping >= limit) return xcallback();
+                    self.setWorkerStatus(worker.name, qtopology.Consts.WorkerStatus.dead, xcallback);
+                },
+                callback
+            );
+        });
+    }
+
+    private disableDefunctLeaders(callback: qtopology.SimpleCallback) {
+        // declare p_min_date datetime;
+        // set p_min_date = DATE_ADD(NOW(), INTERVAL -10 SECOND);
+
+        // update qtopology_worker
+        // set lstatus = ''
+        // where lstatus_ts < p_min_date;
+
+        // update qtopology_worker
+        // set lstatus = ''
+        // where status <> 'alive';
+    }
+
+    private unassignWaitingTopologies(callback: qtopology.SimpleCallback) {
+        // declare p_min_date datetime;
+        // set p_min_date = DATE_ADD(NOW(), INTERVAL -30 SECOND);
+
+        // update qtopology_topology
+        // set status = 'unassigned'
+        // where status = 'waiting' and last_ping < p_min_date;
+
+        // update qtopology_topology
+        // set status = 'unassigned'
+        // where
+        //     status = 'running' and
+        //     worker in (select name from qtopology_worker where status = 'dead');
+    }
+
+    private refreshStatuses(callback: qtopology.SimpleCallback) {
+        let self = this;
+        async.series(
+            [
+                (xcallback) => { self.disableDefunctWorkers(xcallback); },
+                (xcallback) => { self.disableDefunctLeaders(xcallback); },
+                (xcallback) => { self.unassignWaitingTopologies(xcallback); }
+            ],
+            callback
+        );
     }
 }
