@@ -389,6 +389,7 @@ export class MySqlStorage implements qtopology.CoordinationStorage {
             let res: qtopology.TopologyStatusHistory[];
             res = [];
             data.forEach(x => {
+                x.last_ping = x.last_ping || new Date(0);
                 res.push({
                     enabled: x.enabled,
                     error: x.error,
