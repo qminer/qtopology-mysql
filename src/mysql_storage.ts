@@ -142,35 +142,27 @@ export class MySqlStorage implements qtopology.CoordinationStorage {
 
     getWorkerStatus(callback: qtopology.SimpleResultCallback<qtopology.WorkerStatus[]>) {
         let self = this;
-        self.refreshStatuses((err) => {
-            if (err) return callback(err);
-            self.getWorkerStatusInternal(callback);
-        });
+        self.getWorkerStatusInternal(callback);
     }
 
     private getTopologyStatusInternal(sql: string, obj: any, callback: qtopology.SimpleResultCallback<qtopology.TopologyStatus[]>) {
         let self = this;
-        //let xsql = "CALL qtopology_sp_refresh_statuses();";
-        //self.query(xsql, null, (err) => {
-        self.refreshStatuses((err) => {
+        self.query(sql, obj, (err, data) => {
             if (err) return callback(err);
-            self.query(sql, obj, (err, data) => {
-                if (err) return callback(err);
-                let res = [];
-                for (let rec of data) {
-                    res.push({
-                        uuid: rec.uuid,
-                        status: rec.status,
-                        worker: rec.worker,
-                        weight: rec.weight,
-                        enabled: !!rec.enabled,
-                        error: rec.error,
-                        last_ping: rec.last_ping,
-                        worker_affinity: (rec.worker_affinity || "").split(",").filter(x => x.length > 0)
-                    });
-                }
-                callback(null, res);
-            });
+            let res = [];
+            for (let rec of data) {
+                res.push({
+                    uuid: rec.uuid,
+                    status: rec.status,
+                    worker: rec.worker,
+                    weight: rec.weight,
+                    enabled: !!rec.enabled,
+                    error: rec.error,
+                    last_ping: rec.last_ping,
+                    worker_affinity: (rec.worker_affinity || "").split(",").filter(x => x.length > 0)
+                });
+            }
+            callback(null, res);
         });
     }
     getTopologyStatus(callback: qtopology.SimpleResultCallback<qtopology.TopologyStatus[]>) {
@@ -216,24 +208,6 @@ export class MySqlStorage implements qtopology.CoordinationStorage {
         });
     }
 
-    getLeadershipStatus(callback: qtopology.SimpleResultCallback<qtopology.LeadershipResultStatus>) {
-        let self = this;
-        self.refreshStatuses((err) => {
-            if (err) return callback(err);
-            let sql = "CALL qtopology_sp_worker_statuses();";
-            self.query(sql, null, (err, data) => {
-                if (err) return callback(err);
-                data = data[0];
-                let hits = data.filter(x => x.lstatus == qtopology.Consts.WorkerLStatus.leader);
-                if (hits.length > 0 && hits[0].cnt > 0) return callback(null, { leadership: qtopology.Consts.LeadershipStatus.ok });
-
-                hits = data.filter(x => x.lstatus == qtopology.Consts.WorkerLStatus.candidate);
-                if (hits.length > 0 && hits[0].cnt > 0) return callback(null, { leadership: qtopology.Consts.LeadershipStatus.pending });
-
-                callback(null, { leadership: qtopology.Consts.LeadershipStatus.vacant });
-            });
-        });
-    }
     registerWorker(name: string, callback: qtopology.SimpleCallback) {
         // this is called once at start-up and is the name of the worker that uses this coordination object
         // so we can save the name of the worker and use it later
@@ -243,11 +217,8 @@ export class MySqlStorage implements qtopology.CoordinationStorage {
     }
     announceLeaderCandidacy(name: string, callback: qtopology.SimpleCallback) {
         let self = this;
-        self.disableDefunctWorkers((err) => {
-            if (err) return callback(err);
-            let sql = "CALL qtopology_sp_announce_leader_candidacy(?);";
-            self.query(sql, [name], callback);
-        });
+        let sql = "CALL qtopology_sp_announce_leader_candidacy(?);";
+        self.query(sql, [name], callback);
     }
     checkLeaderCandidacy(name: string, callback: qtopology.SimpleResultCallback<boolean>) {
         let self = this;
@@ -425,88 +396,5 @@ export class MySqlStorage implements qtopology.CoordinationStorage {
             });
             callback(null, data);
         });
-    }
-
-    private disableDefunctWorkerSingle(worker: qtopology.WorkerStatus, callback: qtopology.SimpleCallback) {
-        let self = this;
-        let limit1 = Date.now() - 30 * 1000;
-        let limit2 = Date.now() - 10 * 1000;
-        async.series(
-            [
-                (xcallback) => {
-                    // handle status
-                    if (worker.status != qtopology.Consts.WorkerStatus.alive) return xcallback();
-                    if (worker.last_ping >= limit1) return xcallback();
-                    self.setWorkerStatus(worker.name, qtopology.Consts.WorkerStatus.dead, xcallback);
-                },
-                (xcallback) => {
-                    // handle lstatus
-                    if (worker.lstatus != qtopology.Consts.WorkerLStatus.normal && worker.status != qtopology.Consts.WorkerStatus.alive) {
-                        self.setWorkerLStatus(worker.name, qtopology.Consts.WorkerLStatus.normal, xcallback);
-                    } else if (worker.lstatus != qtopology.Consts.WorkerLStatus.normal && worker.last_ping < limit2) {
-                        self.setWorkerLStatus(worker.name, qtopology.Consts.WorkerLStatus.normal, xcallback);
-                    } else {
-                        xcallback();
-                    }
-                }
-            ],
-            callback
-        );
-    }
-
-    private disableDefunctWorkers(callback: qtopology.SimpleCallback) {
-        let self = this;
-        self.getWorkerStatusInternal((err, data) => {
-            if (err) return callback(err);
-            let limit = Date.now() - 30 * 1000;
-            async.each(
-                data,
-                (worker: qtopology.WorkerStatus, xcallback) => {
-                    self.disableDefunctWorkerSingle(worker, xcallback);
-                },
-                callback
-            );
-        });
-    }
-    private unassignWaitingTopologies(callback: qtopology.SimpleCallback) {
-        let self = this;
-        self.getWorkerStatusInternal((err, data_workers) => {
-            if (err) return callback(err);
-            let dead_workers = data_workers
-                .filter(x => x.status == qtopology.Consts.WorkerStatus.dead || x.status == qtopology.Consts.WorkerStatus.unloaded)
-                .map(x => x.name);
-            self.getTopologyStatus((err, data) => {
-                if (err) return callback(err);
-                let limit = Date.now() - 30 * 1000;
-                async.each(
-                    data,
-                    (topology: qtopology.TopologyStatus, xcallback) => {
-                        if (topology.status == qtopology.Consts.TopologyStatus.waiting && topology.last_ping < limit) {
-                            self.setTopologyStatus(topology.uuid, qtopology.Consts.TopologyStatus.unassigned, null, xcallback);
-                        } else if (topology.status == qtopology.Consts.TopologyStatus.running && dead_workers.indexOf(topology.worker) >= 0) {
-                            self.setTopologyStatus(topology.uuid, qtopology.Consts.TopologyStatus.unassigned, null, xcallback);
-                        } else {
-                            xcallback();
-                        }
-                    },
-                    callback
-                );
-            });
-        });
-    }
-
-    private refreshStatuses(callback: qtopology.SimpleCallback) {
-        let self = this;
-        if (Date.now() < self.next_refresh) {
-            return callback();
-        }
-        self.next_refresh = Date.now() + 1000;
-        async.series(
-            [
-                (xcallback) => { self.disableDefunctWorkers(xcallback); },
-                (xcallback) => { self.unassignWaitingTopologies(xcallback); }
-            ],
-            callback
-        );
     }
 }

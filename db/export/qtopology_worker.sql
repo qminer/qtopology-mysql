@@ -4,6 +4,5 @@ CREATE TABLE `qtopology_worker` (
   `status` varchar(10) NOT NULL,
   `last_ping` datetime NOT NULL,
   `lstatus` varchar(10) NOT NULL,
-  `lstatus_ts` datetime NOT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8
