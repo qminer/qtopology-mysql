@@ -4,6 +4,9 @@ begin
     set last_ping = NOW()
     where name = p_name;
 
+    delete from qtopology_message
+    where valid_until < NOW();
+
     select id, cmd, content, created
     from qtopology_message
     where worker = p_name

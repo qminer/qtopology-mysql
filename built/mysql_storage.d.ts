@@ -26,7 +26,6 @@ export declare class MySqlStorage implements qtopology.CoordinationStorage {
     getTopologyStatus(callback: qtopology.SimpleResultCallback<qtopology.TopologyStatus[]>): void;
     getTopologiesForWorker(name: string, callback: qtopology.SimpleResultCallback<qtopology.TopologyStatus[]>): void;
     getTopologyInfo(uuid: string, callback: qtopology.SimpleResultCallback<qtopology.TopologyInfoResponse>): void;
-    getLeadershipStatus(callback: qtopology.SimpleResultCallback<qtopology.LeadershipResultStatus>): void;
     registerWorker(name: string, callback: qtopology.SimpleCallback): void;
     announceLeaderCandidacy(name: string, callback: qtopology.SimpleCallback): void;
     checkLeaderCandidacy(name: string, callback: qtopology.SimpleResultCallback<boolean>): void;
@@ -46,8 +45,4 @@ export declare class MySqlStorage implements qtopology.CoordinationStorage {
     shutDownWorker(name: string, callback: qtopology.SimpleCallback): void;
     getTopologyHistory(uuid: string, callback: qtopology.SimpleResultCallback<qtopology.TopologyStatusHistory[]>): void;
     getWorkerHistory(name: string, callback: qtopology.SimpleResultCallback<qtopology.WorkerStatusHistory[]>): void;
-    private disableDefunctWorkerSingle(worker, callback);
-    private disableDefunctWorkers(callback);
-    private unassignWaitingTopologies(callback);
-    private refreshStatuses(callback);
 }

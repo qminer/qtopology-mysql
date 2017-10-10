@@ -4,5 +4,6 @@ CREATE TABLE `qtopology_message` (
   `cmd` varchar(100) NOT NULL,
   `content` mediumtext NOT NULL,
   `created` datetime NOT NULL,
+  `valid_until` datetime NOT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8
