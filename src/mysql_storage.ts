@@ -300,7 +300,7 @@ export class MySqlStorage implements qtopology.CoordinationStorage {
         this.query(sql, null, callback);
     }
 
-    stopTopology(uuid: string, callback: qtopology.SimpleCallback) {
+    private stopTopologyInternal(uuid: string, do_kill: boolean, callback: qtopology.SimpleCallback) {
         let self = this;
         self.getTopologyInfo(uuid, (err, data) => {
             if (err) return callback(err);
@@ -309,12 +309,19 @@ export class MySqlStorage implements qtopology.CoordinationStorage {
                 if (err) return callback(err);
                 self.sendMessageToWorker(
                     data.worker,
-                    qtopology.Consts.LeaderMessages.stop_topology,
+                    (do_kill ? qtopology.Consts.LeaderMessages.kill_topology : qtopology.Consts.LeaderMessages.stop_topology),
                     { uuid: uuid },
                     30 * 1000,
                     callback);
             });
         });
+    }
+    stopTopology(uuid: string, callback: qtopology.SimpleCallback) {
+        this.stopTopologyInternal(uuid, false, callback);
+    }
+
+    killTopology(uuid: string, callback: qtopology.SimpleCallback) {
+        this.stopTopologyInternal(uuid, true, callback);
     }
 
     clearTopologyError(uuid: string, callback: qtopology.SimpleCallback) {
