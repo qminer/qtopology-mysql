@@ -300,6 +300,28 @@ export class MySqlStorage implements qtopology.CoordinationStorage {
         this.query(sql, null, callback);
     }
 
+    getMsgQueueContent(callback: qtopology.SimpleResultCallback<qtopology.MsgQueueItem[]>) {
+        let self = this;
+        let sql = qh.createSelect(
+            ["worker", "cmd", "content", "created", "valid_until"],
+            table_names.qtopology_message,
+            {}
+        );
+        this.query(sql, null, (err, data) => {
+            if (err) return callback(err);
+            let res = data.map(x => {
+                return {
+                    name: x.worker,
+                    cmd: x.cmd,
+                    data: JSON.parse(x.content),
+                    created: x.created,
+                    valid_until: x.valid_until
+                };
+            });
+            callback(null, res);
+        });
+    }
+
     private stopTopologyInternal(uuid: string, do_kill: boolean, callback: qtopology.SimpleCallback) {
         let self = this;
         self.getTopologyInfo(uuid, (err, data) => {

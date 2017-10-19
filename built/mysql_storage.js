@@ -250,6 +250,24 @@ class MySqlStorage {
         }, table_names.qtopology_message);
         this.query(sql, null, callback);
     }
+    getMsgQueueContent(callback) {
+        let self = this;
+        let sql = qh.createSelect(["worker", "cmd", "content", "created", "valid_until"], table_names.qtopology_message, {});
+        this.query(sql, null, (err, data) => {
+            if (err)
+                return callback(err);
+            let res = data.map(x => {
+                return {
+                    name: x.worker,
+                    cmd: x.cmd,
+                    data: JSON.parse(x.content),
+                    created: x.created,
+                    valid_until: x.valid_until
+                };
+            });
+            callback(null, res);
+        });
+    }
     stopTopologyInternal(uuid, do_kill, callback) {
         let self = this;
         self.getTopologyInfo(uuid, (err, data) => {
