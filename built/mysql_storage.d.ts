@@ -39,7 +39,10 @@ export declare class MySqlStorage implements qtopology.CoordinationStorage {
     deleteTopology(uuid: string, callback: qtopology.SimpleCallback): void;
     getProperties(callback: qtopology.SimpleResultCallback<qtopology.StorageProperty[]>): any;
     sendMessageToWorker(worker: string, cmd: string, content: any, valid_msec: number, callback: qtopology.SimpleCallback): void;
+    getMsgQueueContent(callback: qtopology.SimpleResultCallback<qtopology.MsgQueueItem[]>): void;
+    private stopTopologyInternal(uuid, do_kill, callback);
     stopTopology(uuid: string, callback: qtopology.SimpleCallback): void;
+    killTopology(uuid: string, callback: qtopology.SimpleCallback): void;
     clearTopologyError(uuid: string, callback: qtopology.SimpleCallback): void;
     deleteWorker(name: string, callback: qtopology.SimpleCallback): void;
     shutDownWorker(name: string, callback: qtopology.SimpleCallback): void;
