@@ -300,7 +300,29 @@ export class MySqlStorage implements qtopology.CoordinationStorage {
         this.query(sql, null, callback);
     }
 
-    stopTopology(uuid: string, callback: qtopology.SimpleCallback) {
+    getMsgQueueContent(callback: qtopology.SimpleResultCallback<qtopology.MsgQueueItem[]>) {
+        let self = this;
+        let sql = qh.createSelect(
+            ["worker", "cmd", "content", "created", "valid_until"],
+            table_names.qtopology_message,
+            {}
+        );
+        this.query(sql, null, (err, data) => {
+            if (err) return callback(err);
+            let res = data.map(x => {
+                return {
+                    name: x.worker,
+                    cmd: x.cmd,
+                    data: JSON.parse(x.content),
+                    created: x.created,
+                    valid_until: x.valid_until
+                };
+            });
+            callback(null, res);
+        });
+    }
+
+    private stopTopologyInternal(uuid: string, do_kill: boolean, callback: qtopology.SimpleCallback) {
         let self = this;
         self.getTopologyInfo(uuid, (err, data) => {
             if (err) return callback(err);
@@ -309,12 +331,19 @@ export class MySqlStorage implements qtopology.CoordinationStorage {
                 if (err) return callback(err);
                 self.sendMessageToWorker(
                     data.worker,
-                    qtopology.Consts.LeaderMessages.stop_topology,
+                    (do_kill ? qtopology.Consts.LeaderMessages.kill_topology : qtopology.Consts.LeaderMessages.stop_topology),
                     { uuid: uuid },
                     30 * 1000,
                     callback);
             });
         });
+    }
+    stopTopology(uuid: string, callback: qtopology.SimpleCallback) {
+        this.stopTopologyInternal(uuid, false, callback);
+    }
+
+    killTopology(uuid: string, callback: qtopology.SimpleCallback) {
+        this.stopTopologyInternal(uuid, true, callback);
     }
 
     clearTopologyError(uuid: string, callback: qtopology.SimpleCallback) {
