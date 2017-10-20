@@ -250,7 +250,25 @@ class MySqlStorage {
         }, table_names.qtopology_message);
         this.query(sql, null, callback);
     }
-    stopTopology(uuid, callback) {
+    getMsgQueueContent(callback) {
+        let self = this;
+        let sql = qh.createSelect(["worker", "cmd", "content", "created", "valid_until"], table_names.qtopology_message, {});
+        this.query(sql, null, (err, data) => {
+            if (err)
+                return callback(err);
+            let res = data.map(x => {
+                return {
+                    name: x.worker,
+                    cmd: x.cmd,
+                    data: JSON.parse(x.content),
+                    created: x.created,
+                    valid_until: x.valid_until
+                };
+            });
+            callback(null, res);
+        });
+    }
+    stopTopologyInternal(uuid, do_kill, callback) {
         let self = this;
         self.getTopologyInfo(uuid, (err, data) => {
             if (err)
@@ -260,9 +278,15 @@ class MySqlStorage {
             self.disableTopology(uuid, (err) => {
                 if (err)
                     return callback(err);
-                self.sendMessageToWorker(data.worker, qtopology.Consts.LeaderMessages.stop_topology, { uuid: uuid }, 30 * 1000, callback);
+                self.sendMessageToWorker(data.worker, (do_kill ? qtopology.Consts.LeaderMessages.kill_topology : qtopology.Consts.LeaderMessages.stop_topology), { uuid: uuid }, 30 * 1000, callback);
             });
         });
+    }
+    stopTopology(uuid, callback) {
+        this.stopTopologyInternal(uuid, false, callback);
+    }
+    killTopology(uuid, callback) {
+        this.stopTopologyInternal(uuid, true, callback);
     }
     clearTopologyError(uuid, callback) {
         let self = this;
