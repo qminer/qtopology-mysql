@@ -1,6 +1,18 @@
 {
     "general": {
-        "heartbeat": 1500
+        "heartbeat": 1500,
+        "initialization": [
+            {
+                "working_dir": ".",
+                "cmd": "init_and_shutdown.js"
+            }
+        ],
+        "shutdown": [
+            {
+                "working_dir": ".",
+                "cmd": "init_and_shutdown.js"
+            }
+        ]
     },
     "spouts": [
         {

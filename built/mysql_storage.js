@@ -126,6 +126,7 @@ class MySqlStorage {
                     weight: rec.weight,
                     enabled: !!rec.enabled,
                     error: rec.error,
+                    pid: rec.pid,
                     last_ping: rec.last_ping,
                     worker_affinity: (rec.worker_affinity || "").split(",").filter(x => x.length > 0)
                 });
@@ -134,16 +135,16 @@ class MySqlStorage {
         });
     }
     getTopologyStatus(callback) {
-        let sql = qh.createSelect(["uuid", "status", "worker", "weight", "worker_affinity", "enabled", "last_ping"], table_names.qtopology_topology, {});
+        let sql = qh.createSelect(["uuid", "status", "worker", "weight", "worker_affinity", "enabled", "last_ping", "pid"], table_names.qtopology_topology, {});
         this.getTopologyStatusInternal(sql, null, callback);
     }
     getTopologiesForWorker(name, callback) {
-        let sql = qh.createSelect(["uuid", "status", "worker", "weight", "worker_affinity", "enabled", "last_ping"], table_names.qtopology_topology, { worker: name });
+        let sql = qh.createSelect(["uuid", "status", "worker", "weight", "worker_affinity", "enabled", "last_ping", "pid"], table_names.qtopology_topology, { worker: name });
         this.getTopologyStatusInternal(sql, null, callback);
     }
     getTopologyInfo(uuid, callback) {
         let self = this;
-        let sql = qh.createSelect(["uuid", "status", "worker", "weight", "enabled", "worker_affinity", "error", "config", "last_ping"], table_names.qtopology_topology, { uuid: uuid });
+        let sql = qh.createSelect(["uuid", "status", "worker", "weight", "enabled", "worker_affinity", "error", "config", "last_ping", "pid"], table_names.qtopology_topology, { uuid: uuid });
         self.query(sql, null, (err, data) => {
             if (err)
                 return callback(err);
@@ -161,7 +162,8 @@ class MySqlStorage {
                 worker: hit.worker,
                 last_ping: hit.last_ping.getDate(),
                 last_ping_d: hit.last_ping,
-                config: config
+                config: config,
+                pid: hit.pid
             });
         });
     }
@@ -193,6 +195,11 @@ class MySqlStorage {
     }
     setTopologyStatus(uuid, status, error, callback) {
         let sql = qh.createUpdate({ status: status, last_ping: new Date(), error: error }, table_names.qtopology_topology, { uuid: uuid });
+        sql += "call qtopology_sp_add_topology_history(?);";
+        this.query(sql, [uuid], callback);
+    }
+    setTopologyPid(uuid, pid, callback) {
+        let sql = qh.createUpdate({ pid: pid, last_ping: new Date() }, table_names.qtopology_topology, { uuid: uuid });
         sql += "call qtopology_sp_add_topology_history(?);";
         this.query(sql, [uuid], callback);
     }
@@ -341,6 +348,7 @@ class MySqlStorage {
                     uuid: x.uuid,
                     weight: x.weight,
                     worker: x.worker,
+                    pid: x.pid,
                     last_ping: x.last_ping.getDate(),
                     last_ping_d: x.last_ping,
                     worker_affinity: x.worker_affinity
@@ -362,6 +370,7 @@ class MySqlStorage {
                     lstatus: x.lstatus,
                     name: x.name,
                     status: x.status,
+                    pid: x.pid,
                     ts: x.ts
                 });
             });
