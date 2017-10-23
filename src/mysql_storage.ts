@@ -158,6 +158,7 @@ export class MySqlStorage implements qtopology.CoordinationStorage {
                     weight: rec.weight,
                     enabled: !!rec.enabled,
                     error: rec.error,
+                    pid: rec.pid,
                     last_ping: rec.last_ping,
                     worker_affinity: (rec.worker_affinity || "").split(",").filter(x => x.length > 0)
                 });
@@ -167,7 +168,7 @@ export class MySqlStorage implements qtopology.CoordinationStorage {
     }
     getTopologyStatus(callback: qtopology.SimpleResultCallback<qtopology.TopologyStatus[]>) {
         let sql = qh.createSelect(
-            ["uuid", "status", "worker", "weight", "worker_affinity", "enabled", "last_ping"],
+            ["uuid", "status", "worker", "weight", "worker_affinity", "enabled", "last_ping", "pid"],
             table_names.qtopology_topology,
             {}
         );
@@ -175,7 +176,7 @@ export class MySqlStorage implements qtopology.CoordinationStorage {
     }
     getTopologiesForWorker(name: string, callback: qtopology.SimpleResultCallback<qtopology.TopologyStatus[]>) {
         let sql = qh.createSelect(
-            ["uuid", "status", "worker", "weight", "worker_affinity", "enabled", "last_ping"],
+            ["uuid", "status", "worker", "weight", "worker_affinity", "enabled", "last_ping", "pid"],
             table_names.qtopology_topology,
             { worker: name }
         );
@@ -184,7 +185,7 @@ export class MySqlStorage implements qtopology.CoordinationStorage {
     getTopologyInfo(uuid: string, callback: qtopology.SimpleResultCallback<qtopology.TopologyInfoResponse>) {
         let self = this;
         let sql = qh.createSelect(
-            ["uuid", "status", "worker", "weight", "enabled", "worker_affinity", "error", "config", "last_ping"],
+            ["uuid", "status", "worker", "weight", "enabled", "worker_affinity", "error", "config", "last_ping", "pid"],
             table_names.qtopology_topology,
             { uuid: uuid }
         );
@@ -203,7 +204,8 @@ export class MySqlStorage implements qtopology.CoordinationStorage {
                 worker: hit.worker,
                 last_ping: hit.last_ping.getDate(),
                 last_ping_d: hit.last_ping,
-                config: config
+                config: config,
+                pid: hit.pid
             });
         });
     }
@@ -235,6 +237,11 @@ export class MySqlStorage implements qtopology.CoordinationStorage {
     }
     setTopologyStatus(uuid: string, status: string, error: string, callback: qtopology.SimpleCallback) {
         let sql = qh.createUpdate({ status: status, last_ping: new Date(), error: error }, table_names.qtopology_topology, { uuid: uuid })
+        sql += "call qtopology_sp_add_topology_history(?);";
+        this.query(sql, [uuid], callback);
+    }
+    setTopologyPid(uuid: string, pid: number, callback: qtopology.SimpleCallback) {
+        let sql = qh.createUpdate({ pid: pid, last_ping: new Date() }, table_names.qtopology_topology, { uuid: uuid })
         sql += "call qtopology_sp_add_topology_history(?);";
         this.query(sql, [uuid], callback);
     }
@@ -398,6 +405,7 @@ export class MySqlStorage implements qtopology.CoordinationStorage {
                     uuid: x.uuid,
                     weight: x.weight,
                     worker: x.worker,
+                    pid: x.pid,
                     last_ping: x.last_ping.getDate(),
                     last_ping_d: x.last_ping,
                     worker_affinity: x.worker_affinity
@@ -420,6 +428,7 @@ export class MySqlStorage implements qtopology.CoordinationStorage {
                     lstatus: x.lstatus,
                     name: x.name,
                     status: x.status,
+                    pid: x.pid,
                     ts: x.ts
                 });
             });
