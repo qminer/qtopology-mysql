@@ -8,6 +8,7 @@ CREATE TABLE `qtopology_topology_history` (
   `worker_affinity` varchar(200) DEFAULT NULL,
   `error` varchar(1000) DEFAULT NULL,
   `enabled` tinyint(4) NOT NULL,
+  `pid` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `ix_qtopology_topology_history_ut` (`uuid`,`ts`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8

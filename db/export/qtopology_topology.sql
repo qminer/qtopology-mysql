@@ -9,5 +9,6 @@ CREATE TABLE `qtopology_topology` (
   `last_ping` datetime NOT NULL,
   `error` varchar(1000) DEFAULT NULL,
   `enabled` tinyint(4) NOT NULL,
+  `pid` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8
