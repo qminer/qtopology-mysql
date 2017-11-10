@@ -236,7 +236,8 @@ export class MySqlStorage implements qtopology.CoordinationStorage {
         this.query(sql, [uuid], callback);
     }
     setTopologyStatus(uuid: string, status: string, error: string, callback: qtopology.SimpleCallback) {
-        let sql = qh.createUpdate({ status: status, last_ping: new Date(), error: error }, table_names.qtopology_topology, { uuid: uuid })
+        let cmd: any = { status: status, last_ping: new Date(), error: error };
+        let sql = qh.createUpdate(cmd, table_names.qtopology_topology, { uuid: uuid })
         sql += "call qtopology_sp_add_topology_history(?);";
         this.query(sql, [uuid], callback);
     }
