@@ -20,6 +20,7 @@ export declare class MySqlStorage implements qtopology.CoordinationStorage {
     private log(s);
     private query(sql, obj, callback);
     getMessages(name: string, callback: qtopology.SimpleResultCallback<qtopology.StorageResultMessage[]>): void;
+    getMessage(name: string, callback: qtopology.SimpleResultCallback<qtopology.StorageResultMessage>): void;
     getWorkerStatusInternal(callback: qtopology.SimpleResultCallback<qtopology.WorkerStatus[]>): void;
     getWorkerStatus(callback: qtopology.SimpleResultCallback<qtopology.WorkerStatus[]>): void;
     private getTopologyStatusInternal(sql, obj, callback);
