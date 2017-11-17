@@ -88,6 +88,26 @@ class MySqlStorage {
             });
         });
     }
+    getMessage(name, callback) {
+        let sql = "CALL qtopology_sp_messages_for_worker(?);";
+        let self = this;
+        self.query(sql, [name], (err, data) => {
+            if (err)
+                return callback(err);
+            let res = null;
+            if (data[0] && data[0][0]) {
+                let rec = data[0][0];
+                res = { cmd: rec.cmd, content: JSON.parse(rec.content), created: rec.created };
+                let sql2 = qh.createDelete(table_names.qtopology_message, { id: rec.id });
+                self.query(sql2, null, (err) => {
+                    callback(err, res);
+                });
+            }
+            else {
+                callback(err, null);
+            }
+        });
+    }
     getWorkerStatusInternal(callback) {
         let self = this;
         let sql = qh.createSelect(["name", "status", "lstatus", "last_ping"], table_names.qtopology_worker, {});
