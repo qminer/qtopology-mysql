@@ -95,18 +95,17 @@ class MySqlStorage {
             if (err)
                 return callback(err);
             let res = null;
-            let ids_to_delete = [];
             if (data[0] && data[0][0]) {
                 let rec = data[0][0];
                 res = { cmd: rec.cmd, content: JSON.parse(rec.content), created: rec.created };
-                ids_to_delete.push(rec.id);
+                let sql2 = qh.createDelete(table_names.qtopology_message, { id: rec.id });
+                self.query(sql2, null, (err) => {
+                    callback(err, res);
+                });
             }
-            async.each(ids_to_delete, (item, xcallback) => {
-                let sql2 = qh.createDelete(table_names.qtopology_message, { id: item });
-                self.query(sql2, null, xcallback);
-            }, (err) => {
-                callback(err, res);
-            });
+            else {
+                callback(err, null);
+            }
         });
     }
     getWorkerStatusInternal(callback) {

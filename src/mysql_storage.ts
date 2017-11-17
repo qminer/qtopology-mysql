@@ -124,22 +124,16 @@ export class MySqlStorage implements qtopology.CoordinationStorage {
         self.query(sql, [name], (err, data) => {
             if (err) return callback(err);
             let res: qtopology.StorageResultMessage = null;
-            let ids_to_delete = [];
             if (data[0] && data[0][0]) {
                 let rec = data[0][0];
                 res = { cmd: rec.cmd, content: JSON.parse(rec.content), created: rec.created };
-                ids_to_delete.push(rec.id);
-            }
-
-            async.each(
-                ids_to_delete,
-                (item, xcallback) => {
-                    let sql2 = qh.createDelete(table_names.qtopology_message, { id: item });
-                    self.query(sql2, null, xcallback);
-                },
-                (err: Error) => {
+                let sql2 = qh.createDelete(table_names.qtopology_message, { id: rec.id });
+                self.query(sql2, null, (err) => {
                     callback(err, res);
                 });
+            } else {
+                callback(err, null);
+            }
         });
     }
 
