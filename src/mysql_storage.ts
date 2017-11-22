@@ -118,6 +118,25 @@ export class MySqlStorage implements qtopology.CoordinationStorage {
         });
     }
 
+    getMessage(name: string, callback: qtopology.SimpleResultCallback<qtopology.StorageResultMessage>) {
+        let sql = "CALL qtopology_sp_messages_for_worker(?);";
+        let self = this;
+        self.query(sql, [name], (err, data) => {
+            if (err) return callback(err);
+            let res: qtopology.StorageResultMessage = null;
+            if (data[0] && data[0][0]) {
+                let rec = data[0][0];
+                res = { cmd: rec.cmd, content: JSON.parse(rec.content), created: rec.created };
+                let sql2 = qh.createDelete(table_names.qtopology_message, { id: rec.id });
+                self.query(sql2, null, (err) => {
+                    callback(err, res);
+                });
+            } else {
+                callback(err, null);
+            }
+        });
+    }
+
     getWorkerStatusInternal(callback: qtopology.SimpleResultCallback<qtopology.WorkerStatus[]>) {
         let self = this;
         let sql = qh.createSelect(
@@ -236,7 +255,8 @@ export class MySqlStorage implements qtopology.CoordinationStorage {
         this.query(sql, [uuid], callback);
     }
     setTopologyStatus(uuid: string, status: string, error: string, callback: qtopology.SimpleCallback) {
-        let sql = qh.createUpdate({ status: status, last_ping: new Date(), error: error }, table_names.qtopology_topology, { uuid: uuid })
+        let cmd: any = { status: status, last_ping: new Date(), error: error };
+        let sql = qh.createUpdate(cmd, table_names.qtopology_topology, { uuid: uuid })
         sql += "call qtopology_sp_add_topology_history(?);";
         this.query(sql, [uuid], callback);
     }
