@@ -214,7 +214,8 @@ class MySqlStorage {
         this.query(sql, [uuid], callback);
     }
     setTopologyStatus(uuid, status, error, callback) {
-        let sql = qh.createUpdate({ status: status, last_ping: new Date(), error: error }, table_names.qtopology_topology, { uuid: uuid });
+        let cmd = { status: status, last_ping: new Date(), error: error };
+        let sql = qh.createUpdate(cmd, table_names.qtopology_topology, { uuid: uuid });
         sql += "call qtopology_sp_add_topology_history(?);";
         this.query(sql, [uuid], callback);
     }
