@@ -236,6 +236,11 @@ export class MySqlStorage implements qtopology.CoordinationStorage {
         this.name = name;
         this.query(sql, [name], callback);
     }
+    pingWorker(name: string, callback?: qtopology.SimpleCallback) {
+        let sql = "CALL qtopology_sp_worker_ping(?);";
+        this.name = name;
+        this.query(sql, [name], callback);
+    }
     announceLeaderCandidacy(name: string, callback: qtopology.SimpleCallback) {
         let self = this;
         let sql = "CALL qtopology_sp_announce_leader_candidacy(?);";

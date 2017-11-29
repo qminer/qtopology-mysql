@@ -194,6 +194,11 @@ class MySqlStorage {
         this.name = name;
         this.query(sql, [name], callback);
     }
+    pingWorker(name, callback) {
+        let sql = "CALL qtopology_sp_worker_ping(?);";
+        this.name = name;
+        this.query(sql, [name], callback);
+    }
     announceLeaderCandidacy(name, callback) {
         let self = this;
         let sql = "CALL qtopology_sp_announce_leader_candidacy(?);";
