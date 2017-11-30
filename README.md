@@ -59,6 +59,7 @@ If database schema is already at the latest version, then nothing happens.
 | qtopology_sp_disable_defunct_leaders | Disables leaders that have been inactive too long or are marked as dead |
 | qtopology_sp_disable_defunct_workers | Disables workers that have been inactive too long or are marked as dead |
 | qtopology_sp_leader_ping | Updates last ping for given leader  |
+| qtopology_sp_worker_ping | Updates last ping for given worker, doesn't change status  |
 | qtopology_sp_messages_for_worker | Retrieves messages for single worker |
 | qtopology_sp_refresh_statuses | Refreshes all statuses by calling other stored procedures that update inactive workers etc. |
 | qtopology_sp_register_topology | Registers new topology. If topology exists, it is overwritten. |
