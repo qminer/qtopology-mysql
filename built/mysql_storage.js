@@ -22,6 +22,8 @@ class MySqlStorage {
     constructor(options) {
         this.name = null; // this will be set later
         this.options = JSON.parse(JSON.stringify(options));
+        this.options.retries = this.options.retries || 1;
+        this.options.retry_timeout = this.options.retry_timeout || 10 * 1000; // retry each 10 sec
         this.next_refresh = 0;
         this.pool = mysql.createPool({
             database: options.database,
@@ -58,10 +60,34 @@ class MySqlStorage {
     log(s) {
         qtopology.logger().debug("[MySqlStorage] " + s);
     }
+    static retry(times, timeout, isRetriableError, step, callback) {
+        let cnt = 0;
+        let break_loop = false;
+        let last_err;
+        let last_data = null;
+        isRetriableError = isRetriableError || (() => true);
+        async.doWhilst((xcallback) => {
+            step((err, last_data_current) => {
+                break_loop = (err == null) || !isRetriableError(err);
+                last_data = last_data_current;
+                last_err = err;
+                if (break_loop) {
+                    xcallback();
+                }
+                else {
+                    setTimeout(() => { xcallback(); }, timeout);
+                }
+            });
+        }, () => (!break_loop && ++cnt < times), () => { callback(last_err, last_data); });
+    }
     query(sql, obj, callback) {
+        let self = this;
         try {
-            this.log(`${sql} ${obj}`);
-            this.pool.query(sql, obj || [], callback);
+            self.log(`${sql} ${obj}`);
+            MySqlStorage.retry(this.options.retries, this.options.retry_timeout, (err) => {
+                let err_mysql = err;
+                return (err_mysql && err_mysql.sqlState == 'HY000');
+            }, (xcallback) => { self.pool.query(sql, obj || [], xcallback); }, callback);
         }
         catch (e) {
             callback(e);

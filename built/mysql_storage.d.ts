@@ -5,6 +5,8 @@ export interface MySqlStorageParams {
     database: string;
     user: string;
     password: string;
+    retries: number;
+    retry_timeout: number;
 }
 export interface MySqlTopologyManager {
     insert(uuid: string, config: any, overwrite: boolean, callback: qtopology.SimpleCallback): any;
@@ -18,6 +20,7 @@ export declare class MySqlStorage implements qtopology.CoordinationStorage {
     init(callback: qtopology.SimpleCallback): void;
     close(callback: qtopology.SimpleCallback): void;
     private log(s);
+    static retry(times: number, timeout: number, isRetriableError: (e: Error) => boolean, step: (cb: qtopology.SimpleResultCallback<any>) => void, callback: qtopology.SimpleResultCallback<any>): void;
     private query(sql, obj, callback);
     getMessages(name: string, callback: qtopology.SimpleResultCallback<qtopology.StorageResultMessage[]>): void;
     getMessage(name: string, callback: qtopology.SimpleResultCallback<qtopology.StorageResultMessage>): void;
