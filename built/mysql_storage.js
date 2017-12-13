@@ -244,9 +244,13 @@ class MySqlStorage {
         sql += "call qtopology_sp_add_topology_history(?);";
         this.query(sql, [uuid], callback);
     }
-    setTopologyStatus(uuid, status, error, callback) {
+    setTopologyStatus(uuid, worker, status, error, callback) {
         let cmd = { status: status, last_ping: new Date(), error: error };
-        let sql = qh.createUpdate(cmd, table_names.qtopology_topology, { uuid: uuid });
+        let filter = { uuid: uuid };
+        if (worker) {
+            filter.worker = worker;
+        }
+        let sql = qh.createUpdate(cmd, table_names.qtopology_topology, filter);
         sql += "call qtopology_sp_add_topology_history(?);";
         this.query(sql, [uuid], callback);
     }
@@ -356,7 +360,7 @@ class MySqlStorage {
             if (hit.status != qtopology.Consts.TopologyStatus.error) {
                 return callback(new Error("Specified topology is not marked as error: " + uuid));
             }
-            self.setTopologyStatus(uuid, qtopology.Consts.TopologyStatus.unassigned, null, callback);
+            self.setTopologyStatus(uuid, null, qtopology.Consts.TopologyStatus.unassigned, null, callback);
         });
     }
     deleteWorker(name, callback) {

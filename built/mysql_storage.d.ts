@@ -35,7 +35,7 @@ export declare class MySqlStorage implements qtopology.CoordinationStorage {
     announceLeaderCandidacy(name: string, callback: qtopology.SimpleCallback): void;
     checkLeaderCandidacy(name: string, callback: qtopology.SimpleResultCallback<boolean>): void;
     assignTopology(uuid: string, name: string, callback: qtopology.SimpleCallback): void;
-    setTopologyStatus(uuid: string, status: string, error: string, callback: qtopology.SimpleCallback): void;
+    setTopologyStatus(uuid: string, worker: string, status: string, error: string, callback: qtopology.SimpleCallback): void;
     setTopologyPid(uuid: string, pid: number, callback: qtopology.SimpleCallback): void;
     setWorkerStatus(name: string, status: string, callback: qtopology.SimpleCallback): void;
     setWorkerLStatus(name: string, lstatus: string, callback: qtopology.SimpleCallback): void;
