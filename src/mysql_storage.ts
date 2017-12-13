@@ -49,8 +49,8 @@ export class MySqlStorage implements qtopology.CoordinationStorage {
     constructor(options: MySqlStorageParams) {
         this.name = null; // this will be set later
         this.options = JSON.parse(JSON.stringify(options));
-        this.options.retries = this.options.retries||1;
-        this.options.retry_timeout = this.options.retry_timeout || 10*1000; // retry each 10 sec
+        this.options.retries = this.options.retries || 1;
+        this.options.retry_timeout = this.options.retry_timeout || 10 * 1000; // retry each 10 sec
         this.next_refresh = 0;
         this.pool = mysql.createPool({
             database: options.database,
@@ -302,9 +302,13 @@ export class MySqlStorage implements qtopology.CoordinationStorage {
         sql += "call qtopology_sp_add_topology_history(?);";
         this.query(sql, [uuid], callback);
     }
-    setTopologyStatus(uuid: string, status: string, error: string, callback: qtopology.SimpleCallback) {
+    setTopologyStatus(uuid: string, worker: string, status: string, error: string, callback: qtopology.SimpleCallback) {
         let cmd: any = { status: status, last_ping: new Date(), error: error };
-        let sql = qh.createUpdate(cmd, table_names.qtopology_topology, { uuid: uuid })
+        let filter: any = { uuid: uuid };
+        if (worker) {
+            filter.worker = worker;
+        }
+        let sql = qh.createUpdate(cmd, table_names.qtopology_topology, filter)
         sql += "call qtopology_sp_add_topology_history(?);";
         this.query(sql, [uuid], callback);
     }
@@ -429,7 +433,7 @@ export class MySqlStorage implements qtopology.CoordinationStorage {
             if (hit.status != qtopology.Consts.TopologyStatus.error) {
                 return callback(new Error("Specified topology is not marked as error: " + uuid));
             }
-            self.setTopologyStatus(uuid, qtopology.Consts.TopologyStatus.unassigned, null, callback);
+            self.setTopologyStatus(uuid, null, qtopology.Consts.TopologyStatus.unassigned, null, callback);
         });
     }
 
