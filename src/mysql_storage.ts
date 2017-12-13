@@ -17,6 +17,8 @@ export interface MySqlStorageParams {
     database: string;
     user: string;
     password: string;
+    retries: number;
+    retry_timeout: number;
 }
 
 export interface MySqlTopologyManager {
@@ -47,6 +49,8 @@ export class MySqlStorage implements qtopology.CoordinationStorage {
     constructor(options: MySqlStorageParams) {
         this.name = null; // this will be set later
         this.options = JSON.parse(JSON.stringify(options));
+        this.options.retries = this.options.retries || 1;
+        this.options.retry_timeout = this.options.retry_timeout || 10 * 1000; // retry each 10 sec
         this.next_refresh = 0;
         this.pool = mysql.createPool({
             database: options.database,
@@ -85,10 +89,49 @@ export class MySqlStorage implements qtopology.CoordinationStorage {
         qtopology.logger().debug("[MySqlStorage] " + s);
     }
 
+    public static retry(
+        times: number,
+        timeout: number,
+        isRetriableError: (e: Error) => boolean,
+        step: (cb: qtopology.SimpleResultCallback<any>) => void,
+        callback: qtopology.SimpleResultCallback<any>
+    ) {
+        let cnt = 0;
+        let break_loop = false;
+        let last_err;
+        let last_data = null;
+        isRetriableError = isRetriableError || (() => true);
+        async.doWhilst(
+            (xcallback) => {
+                step((err, last_data_current) => {
+                    break_loop = (err == null) || !isRetriableError(err);
+                    last_data = last_data_current;
+                    last_err = err;
+                    if (break_loop) {
+                        xcallback();
+                    } else {
+                        setTimeout(() => { xcallback(); }, timeout);
+                    }
+                });
+            },
+            () => (!break_loop && ++cnt < times),
+            () => { callback(last_err, last_data) }
+        );
+    }
+
     private query(sql: string, obj: any, callback: qtopology.SimpleResultCallback<any>) {
+        let self = this;
         try {
-            this.log(`${sql} ${obj}`);
-            this.pool.query(sql, obj || [], callback);
+            self.log(`${sql} ${obj}`);
+            MySqlStorage.retry(
+                this.options.retries,
+                this.options.retry_timeout,
+                (err) => {
+                    let err_mysql: any = err;
+                    return (err_mysql && err_mysql.sqlState == 'HY000');
+                },
+                (xcallback) => { self.pool.query(sql, obj || [], xcallback); },
+                callback);
         } catch (e) {
             callback(e);
         }
@@ -259,9 +302,13 @@ export class MySqlStorage implements qtopology.CoordinationStorage {
         sql += "call qtopology_sp_add_topology_history(?);";
         this.query(sql, [uuid], callback);
     }
-    setTopologyStatus(uuid: string, status: string, error: string, callback: qtopology.SimpleCallback) {
+    setTopologyStatus(uuid: string, worker: string, status: string, error: string, callback: qtopology.SimpleCallback) {
         let cmd: any = { status: status, last_ping: new Date(), error: error };
-        let sql = qh.createUpdate(cmd, table_names.qtopology_topology, { uuid: uuid })
+        let filter: any = { uuid: uuid };
+        if (worker) {
+            filter.worker = worker;
+        }
+        let sql = qh.createUpdate(cmd, table_names.qtopology_topology, filter)
         sql += "call qtopology_sp_add_topology_history(?);";
         this.query(sql, [uuid], callback);
     }
@@ -386,7 +433,7 @@ export class MySqlStorage implements qtopology.CoordinationStorage {
             if (hit.status != qtopology.Consts.TopologyStatus.error) {
                 return callback(new Error("Specified topology is not marked as error: " + uuid));
             }
-            self.setTopologyStatus(uuid, qtopology.Consts.TopologyStatus.unassigned, null, callback);
+            self.setTopologyStatus(uuid, null, qtopology.Consts.TopologyStatus.unassigned, null, callback);
         });
     }
 

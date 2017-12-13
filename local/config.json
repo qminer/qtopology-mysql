@@ -3,5 +3,7 @@
     "database": "xtest",
     "user": "qtopology_admin",
     "password": "VSAp2BJ2",
-    "port": 3306
+    "port": 3306,
+    "retries": 10,
+    "retry_timeout": 12000
 }
