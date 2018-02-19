@@ -128,11 +128,52 @@ export class MySqlStorage implements qtopology.CoordinationStorage {
                 this.options.retry_timeout,
                 (err) => {
                     let err_mysql: any = err;
-                    return (err_mysql && err_mysql.sqlState == 'HY000');
+                    return (err_mysql && (
+                        err_mysql.sqlState == 'HY000' ||
+                        err_mysql.code == 'PROTOCOL_SEQUENCE_TIMEOUT' ||
+                        err_mysql.code == "ER_OPTION_PREVENTS_STATEMENT" ||
+                        err_mysql.sqlMessage.indexOf("The server closed the connection") >= 0)
+                    );
                 },
-                (xcallback) => { self.pool.query(sql, obj || [], xcallback); },
-                callback);
+                (xcallback) => {
+                    //self.pool.query(sql, obj || [], xcallback); 
+                    self.pool.getConnection((err, con) => {
+                        if (err) return xcallback(err);
+                        con.query(sql, obj || [], (err, data) => {
+                            if (err) {
+                                let logger = qtopology.logger();
+                                logger.error("Error while executing SQL");
+                                logger.error(sql);
+                                logger.error(JSON.stringify(obj || []));
+                                logger.exception(err);
+                            }
+                            let err_mysql: any = err;
+                            if (err && err_mysql.sqlMessage.indexOf("The server closed the connection") >= 0) {
+                                // this connection should be thrown away and a new one should be opened
+                                con.destroy();
+                            } else {
+                                con.release();
+                            }
+                            xcallback(err, data);
+                        });
+                    });
+                },
+                (err, data) => {
+                    if (err) {
+                        let logger = qtopology.logger();
+                        logger.error("Error while executing SQL");
+                        logger.error(sql);
+                        logger.error(JSON.stringify(obj || []));
+                        logger.exception(err);
+                    }
+                    callback(err, data);
+                });
         } catch (e) {
+            let logger = qtopology.logger();
+            logger.error("Error while executing SQL");
+            logger.error(sql);
+            logger.error(JSON.stringify(obj || []));
+            logger.exception(e);
             callback(e);
         }
     }
