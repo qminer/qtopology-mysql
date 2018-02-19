@@ -19,7 +19,7 @@ storage.init((err) => {
         console.log(err);
         return;
     }
-    let w = new qtopology.TopologyWorker(opts.name, storage);
+    let w = new qtopology.TopologyWorker({ name: opts.name, storage: storage });
     w.run();
     setTimeout(() => { shutdown(); }, 200000);
 })
