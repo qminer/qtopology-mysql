@@ -238,7 +238,7 @@ class MySqlStorage {
             if (data.length == 0)
                 return callback(new Error("Requested topology not found: " + uuid));
             let hit = data[0];
-            let config = JSON.parse(hit.config);
+            let config = JSON.parse(qtopology.strip_json_comments(hit.config));
             callback(null, {
                 enabled: hit.enabled,
                 status: hit.status,
