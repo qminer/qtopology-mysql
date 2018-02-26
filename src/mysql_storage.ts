@@ -148,7 +148,7 @@ export class MySqlStorage implements qtopology.CoordinationStorage {
                                 logger.exception(err);
                             }
                             let err_mysql: any = err;
-                            if (err && err_mysql.sqlMessage.indexOf("The server closed the connectBBion") >= 0) {
+                            if (err && err_mysql.sqlMessage.indexOf("The server closed the connection") >= 0) {
                                 // this connection should be thrown away and a new one should be opened
                                 con.destroy();
                             } else {
