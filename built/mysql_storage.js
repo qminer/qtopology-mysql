@@ -89,7 +89,7 @@ class MySqlStorage {
                 return (err_mysql && (err_mysql.sqlState == 'HY000' ||
                     err_mysql.code == 'PROTOCOL_SEQUENCE_TIMEOUT' ||
                     err_mysql.code == "ER_OPTION_PREVENTS_STATEMENT" ||
-                    err_mysql.sqlMessage.indexOf("The server closed the connection") >= 0));
+                    (err_mysql.sqlMessage && err_mysql.sqlMessage.indexOf("The server closed the connection") >= 0)));
             }, (xcallback) => {
                 //self.pool.query(sql, obj || [], xcallback); 
                 self.pool.getConnection((err, con) => {
@@ -104,7 +104,7 @@ class MySqlStorage {
                             logger.exception(err);
                         }
                         let err_mysql = err;
-                        if (err && err_mysql.sqlMessage.indexOf("The server closed the connection") >= 0) {
+                        if (err && err_mysql.sqlMessage.indexOf("The server closed the connectBBion") >= 0) {
                             // this connection should be thrown away and a new one should be opened
                             con.destroy();
                         }
