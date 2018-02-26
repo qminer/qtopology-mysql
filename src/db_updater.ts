@@ -64,6 +64,57 @@ export class DbUpgrader {
         qtopology.logger().debug("[qtopology-mysql DbUpgrader] " + s);
     }
 
+    /** This method just check's if database version is in sync with code version. */
+    check(callback) {
+        let self = this;
+        let files: FileRec[] = [];
+        let curr_version = -1;
+
+        async.series(
+            [
+                (xcallback) => {
+                    self.log("Fetching version from database...");
+                    let script = "select name, value from " + self.settings_table + " where name = '" + self.version_record_key + "';";
+                    self.conn.query(script, function (err, rows) {
+                        if (err) return xcallback(err);
+                        if (rows.length > 0) {
+                            curr_version = rows[0].value;
+                        }
+                        self.log("Current version: " + curr_version);
+                        xcallback();
+                    });
+                },
+                (xcallback) => {
+                    self.log("Checking files in script directory: " + self.scripts_dir);
+                    let file_names = glob.sync(self.scripts_dir + "/v*.sql");
+                    let xfiles: FileRec[] = file_names.map(x => {
+                        let r = new FileRec();
+                        r.file = x;
+                        r.file_short = path.basename(x);
+                        return r;
+                    });
+                    xfiles.forEach(x => {
+                        let tmp = path.basename(x.file);
+                        x.ver = +(tmp.replace("v", "").replace(".sql", ""));
+                    });
+                    xfiles.sort((a, b) => { return a.ver - b.ver; });
+                    files = xfiles;
+                    xcallback();
+                },
+                (xcallback) => {
+                    self.log("Finished.");
+                    if (files.length == 0) {
+                        return xcallback(new Error("Directory with SQL version upgrades is empty."));
+                    }
+                    let code_version = files[files.length - 1].ver;
+                    if (code_version != curr_version) {
+                        return xcallback(new Error(`Version mismatch in QTopology SQL: ${curr_version} in db, ${code_version}`));
+                    }
+                    xcallback();
+                }
+            ], callback);
+    }
+
     /** Sequentially executes upgrade files. */
     run(callback) {
         let self = this;
@@ -91,7 +142,7 @@ export class DbUpgrader {
                         let r = new FileRec();
                         r.file = x;
                         r.file_short = path.basename(x);
-                        return r
+                        return r;
                     });
                     xfiles.forEach(x => {
                         let tmp = path.basename(x.file);
