@@ -1,4 +1,3 @@
-import * as os from "os";
 import * as async from "async";
 import * as fs from "fs";
 import * as path from "path";
@@ -32,6 +31,20 @@ export interface Connection {
 }
 
 /**
+ * Simple callback.
+ */
+export interface Glob {
+    sync(path: string): string[];
+}
+
+/**
+ * Simple callback.
+ */
+export interface Fs {
+    readFileSync(name: string, encoding: string): string
+}
+
+/**
  * Options for automatic DB upgrade
  */
 export interface DbUpgraderOptions {
@@ -39,6 +52,8 @@ export interface DbUpgraderOptions {
     conn: Connection;
     settings_table: string;
     version_record_key: string;
+    glob?: Glob;
+    fs?: Fs;
 }
 
 /**
@@ -50,6 +65,8 @@ export class DbUpgrader {
     private conn: Connection;
     private settings_table: string;
     private version_record_key: string;
+    private inner_glob: Glob;
+    private inner_fs: Fs;
 
     /** Simple constructor */
     constructor(options: DbUpgraderOptions) {
@@ -57,6 +74,8 @@ export class DbUpgrader {
         this.conn = options.conn;
         this.settings_table = options.settings_table || "Settings";
         this.version_record_key = options.version_record_key || "dbver";
+        this.inner_glob = options.glob || glob;
+        this.inner_fs = options.fs || fs;
     }
 
     /** Internal logging utility method */
@@ -86,7 +105,7 @@ export class DbUpgrader {
                 },
                 (xcallback) => {
                     self.log("Checking files in script directory: " + self.scripts_dir);
-                    let file_names = glob.sync(self.scripts_dir + "/v*.sql");
+                    let file_names = this.inner_glob.sync(self.scripts_dir + "/v*.sql");
                     let xfiles: FileRec[] = file_names.map(x => {
                         let r = new FileRec();
                         r.file = x;
@@ -127,7 +146,7 @@ export class DbUpgrader {
                 (xcallback) => {
                     let file_name = "init.sql";
                     self.log("Executing upgrade file: " + file_name);
-                    let script = fs.readFileSync(path.join(self.scripts_dir, file_name), "utf8");
+                    let script = this.inner_fs.readFileSync(path.join(self.scripts_dir, file_name), "utf8");
                     self.conn.query(script, (err) => {
                         if (err) {
                             console.log(err);
@@ -137,7 +156,7 @@ export class DbUpgrader {
                 },
                 (xcallback) => {
                     self.log("Fetching files in script directory: " + self.scripts_dir);
-                    files = glob.sync(self.scripts_dir + "/v*.sql");
+                    files = this.inner_glob.sync(self.scripts_dir + "/v*.sql");
                     let xfiles = files.map(x => {
                         let r = new FileRec();
                         r.file = x;
@@ -176,7 +195,7 @@ export class DbUpgrader {
                         files,
                         (item: FileRec, xxcallback) => {
                             self.log("Executing upgrade file: " + item.file_short);
-                            let script = fs.readFileSync(item.file, "utf8");
+                            let script = this.inner_fs.readFileSync(item.file, "utf8");
                             self.conn.query(script, (err) => {
                                 if (err) {
                                     console.log(err);
