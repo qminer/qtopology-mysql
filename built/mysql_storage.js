@@ -104,7 +104,7 @@ class MySqlStorage {
                             logger.exception(err);
                         }
                         let err_mysql = err;
-                        if (err && err_mysql.sqlMessage.indexOf("The server closed the connectBBion") >= 0) {
+                        if (err && err_mysql.sqlMessage.indexOf("The server closed the connection") >= 0) {
                             // this connection should be thrown away and a new one should be opened
                             con.destroy();
                         }
