@@ -89,7 +89,7 @@ class MySqlStorage {
                 return (err_mysql && (err_mysql.sqlState == 'HY000' ||
                     err_mysql.code == 'PROTOCOL_SEQUENCE_TIMEOUT' ||
                     err_mysql.code == "ER_OPTION_PREVENTS_STATEMENT" ||
-                    err_mysql.sqlMessage.indexOf("The server closed the connection") >= 0));
+                    (err_mysql.sqlMessage && err_mysql.sqlMessage.indexOf("The server closed the connection") >= 0)));
             }, (xcallback) => {
                 //self.pool.query(sql, obj || [], xcallback); 
                 self.pool.getConnection((err, con) => {
@@ -238,7 +238,7 @@ class MySqlStorage {
             if (data.length == 0)
                 return callback(new Error("Requested topology not found: " + uuid));
             let hit = data[0];
-            let config = JSON.parse(hit.config);
+            let config = JSON.parse(qtopology.strip_json_comments(hit.config));
             callback(null, {
                 enabled: hit.enabled,
                 status: hit.status,
