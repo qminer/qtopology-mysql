@@ -17,8 +17,9 @@ export interface MySqlStorageParams {
     database: string;
     user: string;
     password: string;
-    retries: number;
-    retry_timeout: number;
+    retries?: number;
+    retry_timeout?: number;
+    db_check_only?: boolean;
 }
 
 export interface MySqlTopologyManager {
@@ -45,6 +46,7 @@ export class MySqlStorage implements qtopology.CoordinationStorage {
     private name: string;
     private options: MySqlStorageParams;
     private next_refresh: number;
+    private db_check_only: boolean;
 
     constructor(options: MySqlStorageParams) {
         this.name = null; // this will be set later
@@ -52,6 +54,7 @@ export class MySqlStorage implements qtopology.CoordinationStorage {
         this.options.retries = this.options.retries || 1;
         this.options.retry_timeout = this.options.retry_timeout || 10 * 1000; // retry each 10 sec
         this.next_refresh = 0;
+        this.db_check_only = this.options.db_check_only || false;
         this.pool = mysql.createPool({
             database: options.database,
             host: options.host,
@@ -64,6 +67,7 @@ export class MySqlStorage implements qtopology.CoordinationStorage {
     }
 
     init(callback: qtopology.SimpleCallback) {
+        let self = this;
         this.pool.getConnection((err, conn) => {
             if (err) return callback(err);
             let db_upgrader = new dbu.DbUpgrader({
@@ -72,7 +76,11 @@ export class MySqlStorage implements qtopology.CoordinationStorage {
                 settings_table: "qtopology_settings",
                 version_record_key: "db_version"
             });
-            db_upgrader.run(callback);
+            if (self.db_check_only) {
+                db_upgrader.check(callback);
+            } else {
+                db_upgrader.run(callback);
+            }
         });
     }
 

@@ -25,6 +25,7 @@ class MySqlStorage {
         this.options.retries = this.options.retries || 1;
         this.options.retry_timeout = this.options.retry_timeout || 10 * 1000; // retry each 10 sec
         this.next_refresh = 0;
+        this.db_check_only = this.options.db_check_only || false;
         this.pool = mysql.createPool({
             database: options.database,
             host: options.host,
@@ -36,6 +37,7 @@ class MySqlStorage {
         });
     }
     init(callback) {
+        let self = this;
         this.pool.getConnection((err, conn) => {
             if (err)
                 return callback(err);
@@ -45,7 +47,12 @@ class MySqlStorage {
                 settings_table: "qtopology_settings",
                 version_record_key: "db_version"
             });
-            db_upgrader.run(callback);
+            if (self.db_check_only) {
+                db_upgrader.check(callback);
+            }
+            else {
+                db_upgrader.run(callback);
+            }
         });
     }
     close(callback) {
