@@ -29,6 +29,8 @@ class DbUpgrader {
         if (options.use_init_script != undefined) {
             this.use_init_script = options.use_init_script;
         }
+        this.sql_template_get = "select value from ${tab} where name = '${key}';";
+        this.sql_template_update = "update ${tab} set value = '${ver}' where name = '${key}';";
         this.curr_version = -1;
         this.files = [];
     }
@@ -36,7 +38,7 @@ class DbUpgrader {
     log(s) {
         qtopology.logger().debug(this.log_prefix + s);
     }
-    /** This method just check's if database version is in sync with code version. */
+    /** This method just checks if database version is in sync with code version. */
     check(callback) {
         let self = this;
         async.series([
@@ -108,7 +110,9 @@ class DbUpgrader {
     getCurrentVersionFromDb(callback) {
         let self = this;
         self.log("Fetching version from database...");
-        let script = `select value from ${self.settings_table} where name = '${self.version_record_key}';`;
+        let script = self.sql_template_get
+            .replace("${tab}", self.settings_table)
+            .replace("${key}", self.version_record_key);
         self.conn.query(script, (err, rows) => {
             if (err)
                 return callback(err);
@@ -140,7 +144,10 @@ class DbUpgrader {
     updateVersionInDb(ver, callback) {
         let self = this;
         self.log("Updating version in db to " + ver);
-        let script = `update ${self.settings_table} set value = '${ver}' where name = '${self.version_record_key}'`;
+        let script = self.sql_template_update
+            .replace("${ver}", "" + ver)
+            .replace("${tab}", self.settings_table)
+            .replace("${key}", self.version_record_key);
         self.conn.query(script, callback);
     }
 }

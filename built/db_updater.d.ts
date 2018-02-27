@@ -50,13 +50,15 @@ export declare class DbUpgrader {
     private log_prefix;
     private init_script_name;
     private use_init_script;
+    private sql_template_update;
+    private sql_template_get;
     private curr_version;
     private files;
     /** Simple constructor */
     constructor(options: DbUpgraderOptions);
     /** Internal logging utility method */
     private log(s);
-    /** This method just check's if database version is in sync with code version. */
+    /** This method just checks if database version is in sync with code version. */
     check(callback: qtopology.SimpleCallback): void;
     /** Sequentially executes upgrade files. */
     run(callback: qtopology.SimpleCallback): void;

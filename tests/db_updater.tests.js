@@ -37,8 +37,8 @@ describe('DB updater', function () {
                     switch (sql) {
                         case `select value from ${settings_table} where name = '${version_record_key}';`:
                             return cb(null, []);
-                        case `update ${settings_table} set value = '1' where name = '${version_record_key}'`:
-                        case `update ${settings_table} set value = '2' where name = '${version_record_key}'`:
+                        case `update ${settings_table} set value = '1' where name = '${version_record_key}';`:
+                        case `update ${settings_table} set value = '2' where name = '${version_record_key}';`:
                             return cb(null, []);
                         case `init.sql`:
                             return cb(null, []);
@@ -85,8 +85,8 @@ describe('DB updater', function () {
                     switch (sql) {
                         case `select value from ${settings_table} where name = '${version_record_key}';`:
                             return cb(null, [{ name: "", value: "1"}]);
-                        //case `update ${settings_table} set value = '1' where name = '${version_record_key}'`:
-                        case `update ${settings_table} set value = '2' where name = '${version_record_key}'`:
+                        //case `update ${settings_table} set value = '1' where name = '${version_record_key}';`:
+                        case `update ${settings_table} set value = '2' where name = '${version_record_key}';`:
                             return cb(null, []);
                         case `init.sql`:
                             return cb(null, []);
@@ -133,8 +133,8 @@ describe('DB updater', function () {
                     switch (sql) {
                         case `select value from ${settings_table} where name = '${version_record_key}';`:
                             return cb(null, [{ name: "", value: "2"}]);
-                        //case `update ${settings_table} set value = '1' where name = '${version_record_key}'`:
-                        // case `update ${settings_table} set value = '2' where name = '${version_record_key}'`:
+                        //case `update ${settings_table} set value = '1' where name = '${version_record_key}';`:
+                        // case `update ${settings_table} set value = '2' where name = '${version_record_key}';`:
                         //     return cb(null, []);
                         case `init.sql`:
                             return cb(null, []);
@@ -183,8 +183,8 @@ describe('DB updater', function () {
                     switch (sql) {
                         case `select value from ${settings_table} where name = '${version_record_key}';`:
                             return cb(null, []);
-                        case `update ${settings_table} set value = '1' where name = '${version_record_key}'`:
-                        case `update ${settings_table} set value = '2' where name = '${version_record_key}'`:
+                        case `update ${settings_table} set value = '1' where name = '${version_record_key}';`:
+                        case `update ${settings_table} set value = '2' where name = '${version_record_key}';`:
                             return cb(null, []);
                         case `init2.sql`:
                             return cb(null, []);
@@ -232,8 +232,8 @@ describe('DB updater', function () {
                     switch (sql) {
                         case `select value from ${settings_table} where name = '${version_record_key}';`:
                             return cb(null, [{ name: "", value: "1"}]);
-                        //case `update ${settings_table} set value = '1' where name = '${version_record_key}'`:
-                        case `update ${settings_table} set value = '2' where name = '${version_record_key}'`:
+                        //case `update ${settings_table} set value = '1' where name = '${version_record_key};'`:
+                        case `update ${settings_table} set value = '2' where name = '${version_record_key}';`:
                             return cb(null, []);
                         case `init2.sql`:
                             return cb(null, []);
@@ -281,8 +281,8 @@ describe('DB updater', function () {
                     switch (sql) {
                         case `select value from ${settings_table} where name = '${version_record_key}';`:
                             return cb(null, [{ name: "", value: "2"}]);
-                        //case `update ${settings_table} set value = '1' where name = '${version_record_key}'`:
-                        // case `update ${settings_table} set value = '2' where name = '${version_record_key}'`:
+                        //case `update ${settings_table} set value = '1' where name = '${version_record_key}';`:
+                        // case `update ${settings_table} set value = '2' where name = '${version_record_key}';`:
                         //     return cb(null, []);
                         case `init2.sql`:
                             return cb(null, []);
@@ -332,8 +332,8 @@ describe('DB updater', function () {
                     switch (sql) {
                         case `select value from ${settings_table} where name = '${version_record_key}';`:
                             return cb(null, []);
-                        case `update ${settings_table} set value = '1' where name = '${version_record_key}'`:
-                        case `update ${settings_table} set value = '2' where name = '${version_record_key}'`:
+                        case `update ${settings_table} set value = '1' where name = '${version_record_key}';`:
+                        case `update ${settings_table} set value = '2' where name = '${version_record_key}';`:
                             return cb(null, []);
                         // case `init2.sql`:
                         //     return cb(null, []);
@@ -381,8 +381,8 @@ describe('DB updater', function () {
                     switch (sql) {
                         case `select value from ${settings_table} where name = '${version_record_key}';`:
                             return cb(null, [{ name: "", value: "1"}]);
-                        //case `update ${settings_table} set value = '1' where name = '${version_record_key}'`:
-                        case `update ${settings_table} set value = '2' where name = '${version_record_key}'`:
+                        //case `update ${settings_table} set value = '1' where name = '${version_record_key}';`:
+                        case `update ${settings_table} set value = '2' where name = '${version_record_key}';`:
                             return cb(null, []);
                         // case `init2.sql`:
                         //     return cb(null, []);
@@ -430,8 +430,8 @@ describe('DB updater', function () {
                     switch (sql) {
                         case `select value from ${settings_table} where name = '${version_record_key}';`:
                             return cb(null, [{ name: "", value: "2"}]);
-                        //case `update ${settings_table} set value = '1' where name = '${version_record_key}'`:
-                        // case `update ${settings_table} set value = '2' where name = '${version_record_key}'`:
+                        //case `update ${settings_table} set value = '1' where name = '${version_record_key}';`:
+                        // case `update ${settings_table} set value = '2' where name = '${version_record_key}';`:
                         //     return cb(null, []);
                         // case `init2.sql`:
                         //     return cb(null, []);
