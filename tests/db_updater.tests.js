@@ -35,10 +35,10 @@ describe('DB updater', function () {
             let mock_conn = {
                 query: (sql, cb) => {
                     switch (sql) {
-                        case `select name, value from ${settings_table} where name = '${version_record_key}';`:
+                        case `select value from ${settings_table} where name = '${version_record_key}';`:
                             return cb(null, []);
-                        case `update ${settings_table} set value = '1' where name = '${version_record_key}'`:
-                        case `update ${settings_table} set value = '2' where name = '${version_record_key}'`:
+                        case `update ${settings_table} set value = '1' where name = '${version_record_key}';`:
+                        case `update ${settings_table} set value = '2' where name = '${version_record_key}';`:
                             return cb(null, []);
                         case `init.sql`:
                             return cb(null, []);
@@ -83,10 +83,10 @@ describe('DB updater', function () {
             let mock_conn = {
                 query: (sql, cb) => {
                     switch (sql) {
-                        case `select name, value from ${settings_table} where name = '${version_record_key}';`:
+                        case `select value from ${settings_table} where name = '${version_record_key}';`:
                             return cb(null, [{ name: "", value: "1"}]);
-                        //case `update ${settings_table} set value = '1' where name = '${version_record_key}'`:
-                        case `update ${settings_table} set value = '2' where name = '${version_record_key}'`:
+                        //case `update ${settings_table} set value = '1' where name = '${version_record_key}';`:
+                        case `update ${settings_table} set value = '2' where name = '${version_record_key}';`:
                             return cb(null, []);
                         case `init.sql`:
                             return cb(null, []);
@@ -131,10 +131,10 @@ describe('DB updater', function () {
             let mock_conn = {
                 query: (sql, cb) => {
                     switch (sql) {
-                        case `select name, value from ${settings_table} where name = '${version_record_key}';`:
+                        case `select value from ${settings_table} where name = '${version_record_key}';`:
                             return cb(null, [{ name: "", value: "2"}]);
-                        //case `update ${settings_table} set value = '1' where name = '${version_record_key}'`:
-                        // case `update ${settings_table} set value = '2' where name = '${version_record_key}'`:
+                        //case `update ${settings_table} set value = '1' where name = '${version_record_key}';`:
+                        // case `update ${settings_table} set value = '2' where name = '${version_record_key}';`:
                         //     return cb(null, []);
                         case `init.sql`:
                             return cb(null, []);
@@ -160,6 +160,456 @@ describe('DB updater', function () {
             });
         });
     });
+    describe('run with injected init script name', function () {
+        it('should handle empty query result', function (done) {
+            let mock_fs = {
+                readFileSync: (fname) => {
+                    switch (fname) {
+                        case path.join(scripts_dir, "init2.sql"): return "init2.sql";
+                        case "v1.sql": return "v1.sql";
+                        case "v2.sql": return "v2.sql";
+                    }
+                    assert.fail("Unexpected file to read: " + fname);
+                }
+            };
+            let mock_glob = {
+                sync: (p) => {
+                    assert.equal(p, path.normalize(scripts_dir + "/v*.sql"));
+                    return ["v1.sql", "v2.sql"];
+                }
+            };
+            let mock_conn = {
+                query: (sql, cb) => {
+                    switch (sql) {
+                        case `select value from ${settings_table} where name = '${version_record_key}';`:
+                            return cb(null, []);
+                        case `update ${settings_table} set value = '1' where name = '${version_record_key}';`:
+                        case `update ${settings_table} set value = '2' where name = '${version_record_key}';`:
+                            return cb(null, []);
+                        case `init2.sql`:
+                            return cb(null, []);
+                        case `v1.sql`:
+                            return cb(null, []);
+                        case `v2.sql`:
+                            return cb(null, []);
+                    }
+                    assert.fail("Unexpected sql: " + sql);
+                }
+            }
+            let target = new dbu.DbUpgrader({
+                conn: mock_conn,
+                glob: mock_glob,
+                scripts_dir: scripts_dir,
+                settings_table: settings_table,
+                version_record_key: version_record_key,
+                fs: mock_fs,
+                init_script_name: "init2.sql"
+            });
+            target.run((err) => {
+                assert.ok(err == null);
+                done();
+            });
+        });
+        it('should handle DB lower', function (done) {
+            let mock_fs = {
+                readFileSync: (fname) => {
+                    switch (fname) {
+                        case path.join(scripts_dir, "init2.sql"): return "init2.sql";
+                        //case "v1.sql": return "v1.sql";
+                        case "v2.sql": return "v2.sql";
+                    }
+                    assert.fail("Unexpected file to read: " + fname);
+                }
+            };
+            let mock_glob = {
+                sync: (p) => {
+                    assert.equal(p, path.normalize(scripts_dir + "/v*.sql"));
+                    return ["v1.sql", "v2.sql"];
+                }
+            };
+            let mock_conn = {
+                query: (sql, cb) => {
+                    switch (sql) {
+                        case `select value from ${settings_table} where name = '${version_record_key}';`:
+                            return cb(null, [{ name: "", value: "1"}]);
+                        //case `update ${settings_table} set value = '1' where name = '${version_record_key};'`:
+                        case `update ${settings_table} set value = '2' where name = '${version_record_key}';`:
+                            return cb(null, []);
+                        case `init2.sql`:
+                            return cb(null, []);
+                        // case `v1.sql`:
+                        //     return cb(null, []);
+                        case `v2.sql`:
+                            return cb(null, []);
+                    }
+                    assert.fail("Unexpected sql: " + sql);
+                }
+            }
+            let target = new dbu.DbUpgrader({
+                conn: mock_conn,
+                glob: mock_glob,
+                scripts_dir: scripts_dir,
+                settings_table: settings_table,
+                version_record_key: version_record_key,
+                fs: mock_fs,
+                init_script_name: "init2.sql"
+            });
+            target.run((err) => {
+                assert.ok(err == null);
+                done();
+            });
+        });
+        it('should handle DB at latest', function (done) {
+            let mock_fs = {
+                readFileSync: (fname) => {
+                    switch (fname) {
+                        case path.join(scripts_dir, "init2.sql"): return "init2.sql";
+                        //case "v1.sql": return "v1.sql";
+                        //case "v2.sql": return "v2.sql";
+                    }
+                    assert.fail("Unexpected file to read: " + fname);
+                }
+            };
+            let mock_glob = {
+                sync: (p) => {
+                    assert.equal(p, path.normalize(scripts_dir + "/v*.sql"));
+                    return ["v1.sql", "v2.sql"];
+                }
+            };
+            let mock_conn = {
+                query: (sql, cb) => {
+                    switch (sql) {
+                        case `select value from ${settings_table} where name = '${version_record_key}';`:
+                            return cb(null, [{ name: "", value: "2"}]);
+                        //case `update ${settings_table} set value = '1' where name = '${version_record_key}';`:
+                        // case `update ${settings_table} set value = '2' where name = '${version_record_key}';`:
+                        //     return cb(null, []);
+                        case `init2.sql`:
+                            return cb(null, []);
+                        // case `v1.sql`:
+                        //     return cb(null, []);
+                        // case `v2.sql`:
+                        //     return cb(null, []);
+                    }
+                    assert.fail("Unexpected sql: " + sql);
+                }
+            }
+            let target = new dbu.DbUpgrader({
+                conn: mock_conn,
+                glob: mock_glob,
+                scripts_dir: scripts_dir,
+                settings_table: settings_table,
+                version_record_key: version_record_key,
+                fs: mock_fs,
+                init_script_name: "init2.sql"
+            });
+            target.run((err) => {
+                assert.ok(err == null);
+                done();
+            });
+        });
+    });
+    describe('run with no init script', function () {
+        it('should handle empty query result', function (done) {
+            let mock_fs = {
+                readFileSync: (fname) => {
+                    switch (fname) {
+                        //case path.join(scripts_dir, "init2.sql"): return "init2.sql";
+                        case "v1.sql": return "v1.sql";
+                        case "v2.sql": return "v2.sql";
+                    }
+                    assert.fail("Unexpected file to read: " + fname);
+                }
+            };
+            let mock_glob = {
+                sync: (p) => {
+                    assert.equal(p, path.normalize(scripts_dir + "/v*.sql"));
+                    return ["v1.sql", "v2.sql"];
+                }
+            };
+            let mock_conn = {
+                query: (sql, cb) => {
+                    switch (sql) {
+                        case `select value from ${settings_table} where name = '${version_record_key}';`:
+                            return cb(null, []);
+                        case `update ${settings_table} set value = '1' where name = '${version_record_key}';`:
+                        case `update ${settings_table} set value = '2' where name = '${version_record_key}';`:
+                            return cb(null, []);
+                        // case `init2.sql`:
+                        //     return cb(null, []);
+                        case `v1.sql`:
+                            return cb(null, []);
+                        case `v2.sql`:
+                            return cb(null, []);
+                    }
+                    assert.fail("Unexpected sql: " + sql);
+                }
+            }
+            let target = new dbu.DbUpgrader({
+                conn: mock_conn,
+                glob: mock_glob,
+                scripts_dir: scripts_dir,
+                settings_table: settings_table,
+                version_record_key: version_record_key,
+                fs: mock_fs,
+                use_init_script: false
+            });
+            target.run((err) => {
+                assert.ok(err == null);
+                done();
+            });
+        });
+        it('should handle DB lower', function (done) {
+            let mock_fs = {
+                readFileSync: (fname) => {
+                    switch (fname) {
+                        //case path.join(scripts_dir, "init2.sql"): return "init2.sql";
+                        //case "v1.sql": return "v1.sql";
+                        case "v2.sql": return "v2.sql";
+                    }
+                    assert.fail("Unexpected file to read: " + fname);
+                }
+            };
+            let mock_glob = {
+                sync: (p) => {
+                    assert.equal(p, path.normalize(scripts_dir + "/v*.sql"));
+                    return ["v1.sql", "v2.sql"];
+                }
+            };
+            let mock_conn = {
+                query: (sql, cb) => {
+                    switch (sql) {
+                        case `select value from ${settings_table} where name = '${version_record_key}';`:
+                            return cb(null, [{ name: "", value: "1"}]);
+                        //case `update ${settings_table} set value = '1' where name = '${version_record_key}';`:
+                        case `update ${settings_table} set value = '2' where name = '${version_record_key}';`:
+                            return cb(null, []);
+                        // case `init2.sql`:
+                        //     return cb(null, []);
+                        // case `v1.sql`:
+                        //     return cb(null, []);
+                        case `v2.sql`:
+                            return cb(null, []);
+                    }
+                    assert.fail("Unexpected sql: " + sql);
+                }
+            }
+            let target = new dbu.DbUpgrader({
+                conn: mock_conn,
+                glob: mock_glob,
+                scripts_dir: scripts_dir,
+                settings_table: settings_table,
+                version_record_key: version_record_key,
+                fs: mock_fs,
+                use_init_script: false
+            });
+            target.run((err) => {
+                assert.ok(err == null);
+                done();
+            });
+        });
+        it('should handle DB at latest', function (done) {
+            let mock_fs = {
+                readFileSync: (fname) => {
+                    switch (fname) {
+                        //case path.join(scripts_dir, "init2.sql"): return "init2.sql";
+                        //case "v1.sql": return "v1.sql";
+                        //case "v2.sql": return "v2.sql";
+                    }
+                    assert.fail("Unexpected file to read: " + fname);
+                }
+            };
+            let mock_glob = {
+                sync: (p) => {
+                    assert.equal(p, path.normalize(scripts_dir + "/v*.sql"));
+                    return ["v1.sql", "v2.sql"];
+                }
+            };
+            let mock_conn = {
+                query: (sql, cb) => {
+                    switch (sql) {
+                        case `select value from ${settings_table} where name = '${version_record_key}';`:
+                            return cb(null, [{ name: "", value: "2"}]);
+                        //case `update ${settings_table} set value = '1' where name = '${version_record_key}';`:
+                        // case `update ${settings_table} set value = '2' where name = '${version_record_key}';`:
+                        //     return cb(null, []);
+                        // case `init2.sql`:
+                        //     return cb(null, []);
+                        // case `v1.sql`:
+                        //     return cb(null, []);
+                        // case `v2.sql`:
+                        //     return cb(null, []);
+                    }
+                    assert.fail("Unexpected sql: " + sql);
+                }
+            }
+            let target = new dbu.DbUpgrader({
+                conn: mock_conn,
+                glob: mock_glob,
+                scripts_dir: scripts_dir,
+                settings_table: settings_table,
+                version_record_key: version_record_key,
+                fs: mock_fs,
+                use_init_script: false
+            });
+            target.run((err) => {
+                assert.ok(err == null);
+                done();
+            });
+        });
+    });
+    describe('run with injected update and get SQL', function () {
+        it('should handle empty query result', function (done) {
+            let mock_fs = {
+                readFileSync: (fname) => {
+                    switch (fname) {
+                        case path.join(scripts_dir, "init.sql"): return "init.sql";
+                        case "v1.sql": return "v1.sql";
+                        case "v2.sql": return "v2.sql";
+                    }
+                    assert.fail("Unexpected file to read: " + fname);
+                }
+            };
+            let mock_glob = {
+                sync: (p) => {
+                    assert.equal(p, path.normalize(scripts_dir + "/v*.sql"));
+                    return ["v1.sql", "v2.sql"];
+                }
+            };
+            let mock_conn = {
+                query: (sql, cb) => {
+                    switch (sql) {
+                        case `sql tmpl get ${settings_table} ${version_record_key}`:
+                            return cb(null, []);
+                        case `sql tmpl update ${settings_table} ${version_record_key} 1`:
+                        case `sql tmpl update ${settings_table} ${version_record_key} 2`:
+                            return cb(null, []);
+                        case `init.sql`:
+                            return cb(null, []);
+                        case `v1.sql`:
+                            return cb(null, []);
+                        case `v2.sql`:
+                            return cb(null, []);
+                    }
+                    assert.fail("Unexpected sql: " + sql);
+                }
+            }
+            let target = new dbu.DbUpgrader({
+                conn: mock_conn,
+                glob: mock_glob,
+                scripts_dir: scripts_dir,
+                settings_table: settings_table,
+                version_record_key: version_record_key,
+                fs: mock_fs,
+                sql_template_get: "sql tmpl get ${tab} ${key}",
+                sql_template_update: "sql tmpl update ${tab} ${key} ${ver}"
+            });
+            target.run((err) => {
+                assert.ok(err == null);
+                done();
+            });
+        });
+        it('should handle DB lower', function (done) {
+            let mock_fs = {
+                readFileSync: (fname) => {
+                    switch (fname) {
+                        case path.join(scripts_dir, "init.sql"): return "init.sql";
+                        //case "v1.sql": return "v1.sql";
+                        case "v2.sql": return "v2.sql";
+                    }
+                    assert.fail("Unexpected file to read: " + fname);
+                }
+            };
+            let mock_glob = {
+                sync: (p) => {
+                    assert.equal(p, path.normalize(scripts_dir + "/v*.sql"));
+                    return ["v1.sql", "v2.sql"];
+                }
+            };
+            let mock_conn = {
+                query: (sql, cb) => {
+                    switch (sql) {
+                        case `sql tmpl get ${settings_table} ${version_record_key}`:
+                            return cb(null, [{ name: "", value: "1"}]);
+                        //case `sql tmpl update ${settings_table} ${version_record_key} 1`:
+                        case `sql tmpl update ${settings_table} ${version_record_key} 2`:
+                            return cb(null, []);
+                        case `init.sql`:
+                            return cb(null, []);
+                        // case `v1.sql`:
+                        //     return cb(null, []);
+                        case `v2.sql`:
+                            return cb(null, []);
+                    }
+                    assert.fail("Unexpected sql: " + sql);
+                }
+            }
+            let target = new dbu.DbUpgrader({
+                conn: mock_conn,
+                glob: mock_glob,
+                scripts_dir: scripts_dir,
+                settings_table: settings_table,
+                version_record_key: version_record_key,
+                fs: mock_fs,
+                sql_template_get: "sql tmpl get ${tab} ${key}",
+                sql_template_update: "sql tmpl update ${tab} ${key} ${ver}"
+            });
+            target.run((err) => {
+                assert.ok(err == null);
+                done();
+            });
+        });
+        it('should handle DB at latest', function (done) {
+            let mock_fs = {
+                readFileSync: (fname) => {
+                    switch (fname) {
+                        case path.join(scripts_dir, "init.sql"): return "init.sql";
+                        //case "v1.sql": return "v1.sql";
+                        //case "v2.sql": return "v2.sql";
+                    }
+                    assert.fail("Unexpected file to read: " + fname);
+                }
+            };
+            let mock_glob = {
+                sync: (p) => {
+                    assert.equal(p, path.normalize(scripts_dir + "/v*.sql"));
+                    return ["v1.sql", "v2.sql"];
+                }
+            };
+            let mock_conn = {
+                query: (sql, cb) => {
+                    switch (sql) {
+                        case `sql tmpl get ${settings_table} ${version_record_key}`:
+                            return cb(null, [{ name: "", value: "2"}]);
+                        // case `sql tmpl update ${settings_table} ${version_record_key} 1`:
+                        // case `sql tmpl update ${settings_table} ${version_record_key} 2`:
+                        //     return cb(null, []);
+                        case `init.sql`:
+                            return cb(null, []);
+                        // case `v1.sql`:
+                        //     return cb(null, []);
+                        // case `v2.sql`:
+                        //     return cb(null, []);
+                    }
+                    assert.fail("Unexpected sql: " + sql);
+                }
+            }
+            let target = new dbu.DbUpgrader({
+                conn: mock_conn,
+                glob: mock_glob,
+                scripts_dir: scripts_dir,
+                settings_table: settings_table,
+                version_record_key: version_record_key,
+                fs: mock_fs,
+                sql_template_get: "sql tmpl get ${tab} ${key}",
+                sql_template_update: "sql tmpl update ${tab} ${key} ${ver}"
+            });
+            target.run((err) => {
+                assert.ok(err == null);
+                done();
+            });
+        });
+    });
     describe('check', function () {
         it('should handle empty query result', function (done) {
             let mock_glob = {
@@ -170,7 +620,7 @@ describe('DB updater', function () {
             };
             let mock_conn = {
                 query: (sql, cb) => {
-                    assert.equal(sql, `select name, value from ${settings_table} where name = '${version_record_key}';`);
+                    assert.equal(sql, `select value from ${settings_table} where name = '${version_record_key}';`);
                     cb(null, []);
                 }
             }
@@ -196,7 +646,7 @@ describe('DB updater', function () {
             let curr_value = 2;
             let mock_conn = {
                 query: (sql, cb) => {
-                    assert.equal(sql, `select name, value from ${settings_table} where name = '${version_record_key}';`);
+                    assert.equal(sql, `select value from ${settings_table} where name = '${version_record_key}';`);
                     cb(new Error("Some error"));
                 }
             }
@@ -223,7 +673,7 @@ describe('DB updater', function () {
             let curr_value = 2;
             let mock_conn = {
                 query: (sql, cb) => {
-                    assert.equal(sql, `select name, value from ${settings_table} where name = '${version_record_key}';`);
+                    assert.equal(sql, `select value from ${settings_table} where name = '${version_record_key}';`);
                     cb(null, [{ value: curr_value }]);
                 }
             }
@@ -249,7 +699,7 @@ describe('DB updater', function () {
             let curr_value = 2;
             let mock_conn = {
                 query: (sql, cb) => {
-                    assert.equal(sql, `select name, value from ${settings_table} where name = '${version_record_key}';`);
+                    assert.equal(sql, `select value from ${settings_table} where name = '${version_record_key}';`);
                     cb(null, [{ value: curr_value }]);
                 }
             }
@@ -275,7 +725,7 @@ describe('DB updater', function () {
             let curr_value = 1;
             let mock_conn = {
                 query: (sql, cb) => {
-                    assert.equal(sql, `select name, value from ${settings_table} where name = '${version_record_key}';`);
+                    assert.equal(sql, `select value from ${settings_table} where name = '${version_record_key}';`);
                     cb(null, [{ value: curr_value }]);
                 }
             }
@@ -301,7 +751,7 @@ describe('DB updater', function () {
             let curr_value = 3;
             let mock_conn = {
                 query: (sql, cb) => {
-                    assert.equal(sql, `select name, value from ${settings_table} where name = '${version_record_key}';`);
+                    assert.equal(sql, `select value from ${settings_table} where name = '${version_record_key}';`);
                     cb(null, [{ value: curr_value }]);
                 }
             }
