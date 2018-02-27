@@ -1,12 +1,14 @@
 import * as qtopology from "qtopology";
+export { DbUpgrader } from "./db_updater";
 export interface MySqlStorageParams {
     host: string;
     port: number;
     database: string;
     user: string;
     password: string;
-    retries: number;
-    retry_timeout: number;
+    retries?: number;
+    retry_timeout?: number;
+    db_check_only?: boolean;
 }
 export interface MySqlTopologyManager {
     insert(uuid: string, config: any, overwrite: boolean, callback: qtopology.SimpleCallback): any;
@@ -16,6 +18,7 @@ export declare class MySqlStorage implements qtopology.CoordinationStorage {
     private name;
     private options;
     private next_refresh;
+    private db_check_only;
     constructor(options: MySqlStorageParams);
     init(callback: qtopology.SimpleCallback): void;
     close(callback: qtopology.SimpleCallback): void;
