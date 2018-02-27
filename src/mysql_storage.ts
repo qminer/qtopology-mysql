@@ -9,6 +9,8 @@ import * as qtopology from "qtopology";
 import * as dbu from "./db_updater";
 import * as qh from "./query_helper";
 
+export { DbUpgrader } from "./db_updater";
+
 /////////////////////////////////////////////////////////////////////
 
 export interface MySqlStorageParams {

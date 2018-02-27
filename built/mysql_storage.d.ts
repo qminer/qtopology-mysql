@@ -1,4 +1,5 @@
 import * as qtopology from "qtopology";
+export { DbUpgrader } from "./db_updater";
 export interface MySqlStorageParams {
     host: string;
     port: number;

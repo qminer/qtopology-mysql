@@ -7,6 +7,8 @@ const path = require("path");
 const qtopology = require("qtopology");
 const dbu = require("./db_updater");
 const qh = require("./query_helper");
+var db_updater_1 = require("./db_updater");
+exports.DbUpgrader = db_updater_1.DbUpgrader;
 //////////////////////////////////////////////////////////////////////
 const table_names = {
     qtopology_message: "qtopology_message",
