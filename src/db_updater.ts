@@ -55,6 +55,8 @@ export interface DbUpgraderOptions {
     log_prefix?: string;
     glob?: Glob;
     fs?: Fs;
+    use_init_script?: boolean;
+    init_script_name?: string;
 }
 
 /**
@@ -69,6 +71,8 @@ export class DbUpgrader {
     private inner_glob: Glob;
     private inner_fs: Fs;
     private log_prefix: string;
+    private init_script_name: string;
+    private use_init_script: boolean;
 
     private curr_version: number;
     private files: FileRec[];
@@ -82,6 +86,11 @@ export class DbUpgrader {
         this.inner_glob = options.glob || glob;
         this.inner_fs = options.fs || fs;
         this.log_prefix = options.log_prefix || "[qtopology-mysql DbUpgrader] ";
+        this.init_script_name = options.init_script_name || "init.sql";
+        this.use_init_script = true;
+        if (options.use_init_script != undefined) {
+            this.use_init_script = options.use_init_script;
+        }
 
         this.curr_version = -1;
         this.files = [];
@@ -125,15 +134,7 @@ export class DbUpgrader {
         async.series(
             [
                 (xcallback) => {
-                    let file_name = "init.sql";
-                    self.log("Executing upgrade file: " + file_name);
-                    let script = this.inner_fs.readFileSync(path.join(self.scripts_dir, file_name), "utf8");
-                    self.conn.query(script, (err) => {
-                        if (err) {
-                            console.log(err);
-                        }
-                        xcallback(err);
-                    });
+                    self.runInitScript(xcallback);
                 },
                 (xcallback) => {
                     self.checkFilesInScriptsDir(xcallback);
@@ -145,9 +146,7 @@ export class DbUpgrader {
                     self.log("Detecting applicable upgrade files...");
                     self.files = self.files.filter(x => x.ver > self.curr_version);
                     self.files = self.files.sort((a, b) => { return a.ver - b.ver; });
-                    xcallback();
-                },
-                (xcallback) => {
+
                     self.log("Number of applicable upgrade files: " + self.files.length);
                     async.eachSeries(
                         self.files,
@@ -171,10 +170,22 @@ export class DbUpgrader {
             ], callback);
     }
 
+    private runInitScript(callback: qtopology.SimpleCallback) {
+        let self = this;
+
+        if (!self.use_init_script){
+            return callback();
+        }
+        self.log("Executing upgrade file: " + self.init_script_name);
+        let fname = path.join(self.scripts_dir, self.init_script_name);
+        let script = this.inner_fs.readFileSync(fname, "utf8");
+        self.conn.query(script, callback);
+    }
+
     private getCurrentVersionFromDb(callback: qtopology.SimpleCallback) {
         let self = this;
         self.log("Fetching version from database...");
-        let script = "select value from " + self.settings_table + " where name = '" + self.version_record_key + "';";
+        let script = `select value from ${self.settings_table} where name = '${self.version_record_key}';`;
         self.conn.query(script, (err, rows) => {
             if (err) return callback(err);
             if (rows.length > 0) {

@@ -34,6 +34,8 @@ export interface DbUpgraderOptions {
     log_prefix?: string;
     glob?: Glob;
     fs?: Fs;
+    use_init_script?: boolean;
+    init_script_name?: string;
 }
 /**
  * This class handles automatic upgrades of underlaying database.
@@ -46,6 +48,8 @@ export declare class DbUpgrader {
     private inner_glob;
     private inner_fs;
     private log_prefix;
+    private init_script_name;
+    private use_init_script;
     private curr_version;
     private files;
     /** Simple constructor */
@@ -56,6 +60,7 @@ export declare class DbUpgrader {
     check(callback: qtopology.SimpleCallback): void;
     /** Sequentially executes upgrade files. */
     run(callback: qtopology.SimpleCallback): void;
+    private runInitScript(callback);
     private getCurrentVersionFromDb(callback);
     private checkFilesInScriptsDir(xcallback);
     private updateVersionInDb(ver, callback);

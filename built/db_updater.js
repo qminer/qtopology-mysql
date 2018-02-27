@@ -24,6 +24,11 @@ class DbUpgrader {
         this.inner_glob = options.glob || glob;
         this.inner_fs = options.fs || fs;
         this.log_prefix = options.log_prefix || "[qtopology-mysql DbUpgrader] ";
+        this.init_script_name = options.init_script_name || "init.sql";
+        this.use_init_script = true;
+        if (options.use_init_script != undefined) {
+            this.use_init_script = options.use_init_script;
+        }
         this.curr_version = -1;
         this.files = [];
     }
@@ -59,15 +64,7 @@ class DbUpgrader {
         let self = this;
         async.series([
             (xcallback) => {
-                let file_name = "init.sql";
-                self.log("Executing upgrade file: " + file_name);
-                let script = this.inner_fs.readFileSync(path.join(self.scripts_dir, file_name), "utf8");
-                self.conn.query(script, (err) => {
-                    if (err) {
-                        console.log(err);
-                    }
-                    xcallback(err);
-                });
+                self.runInitScript(xcallback);
             },
             (xcallback) => {
                 self.checkFilesInScriptsDir(xcallback);
@@ -79,9 +76,6 @@ class DbUpgrader {
                 self.log("Detecting applicable upgrade files...");
                 self.files = self.files.filter(x => x.ver > self.curr_version);
                 self.files = self.files.sort((a, b) => { return a.ver - b.ver; });
-                xcallback();
-            },
-            (xcallback) => {
                 self.log("Number of applicable upgrade files: " + self.files.length);
                 async.eachSeries(self.files, (item, xxcallback) => {
                     self.log("Executing upgrade file: " + item.file_short);
@@ -101,10 +95,20 @@ class DbUpgrader {
             }
         ], callback);
     }
+    runInitScript(callback) {
+        let self = this;
+        if (!self.use_init_script) {
+            return callback();
+        }
+        self.log("Executing upgrade file: " + self.init_script_name);
+        let fname = path.join(self.scripts_dir, self.init_script_name);
+        let script = this.inner_fs.readFileSync(fname, "utf8");
+        self.conn.query(script, callback);
+    }
     getCurrentVersionFromDb(callback) {
         let self = this;
         self.log("Fetching version from database...");
-        let script = "select value from " + self.settings_table + " where name = '" + self.version_record_key + "';";
+        let script = `select value from ${self.settings_table} where name = '${self.version_record_key}';`;
         self.conn.query(script, (err, rows) => {
             if (err)
                 return callback(err);
