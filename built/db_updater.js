@@ -91,9 +91,7 @@ class DbUpgrader {
                             console.log(err);
                             return xxcallback(err);
                         }
-                        self.log("Updating version in db to " + item.ver);
-                        let script2 = `update ${self.settings_table} set value = '${item.ver}' where name = '${self.version_record_key}'`;
-                        self.conn.query(script2, xxcallback);
+                        self.updateVersionInDb(item.ver, xxcallback);
                     });
                 }, xcallback);
             },
@@ -134,6 +132,12 @@ class DbUpgrader {
         xfiles.sort((a, b) => { return a.ver - b.ver; });
         self.files = xfiles;
         xcallback();
+    }
+    updateVersionInDb(ver, callback) {
+        let self = this;
+        self.log("Updating version in db to " + ver);
+        let script = `update ${self.settings_table} set value = '${ver}' where name = '${self.version_record_key}'`;
+        self.conn.query(script, callback);
     }
 }
 exports.DbUpgrader = DbUpgrader;

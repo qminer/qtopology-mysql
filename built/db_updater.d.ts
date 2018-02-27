@@ -1,3 +1,4 @@
+import * as qtopology from "qtopology";
 /**
  * Simple callback.
  */
@@ -52,9 +53,10 @@ export declare class DbUpgrader {
     /** Internal logging utility method */
     private log(s);
     /** This method just check's if database version is in sync with code version. */
-    check(callback: any): void;
+    check(callback: qtopology.SimpleCallback): void;
     /** Sequentially executes upgrade files. */
-    run(callback: any): void;
+    run(callback: qtopology.SimpleCallback): void;
     private getCurrentVersionFromDb(callback);
     private checkFilesInScriptsDir(xcallback);
+    private updateVersionInDb(ver, callback);
 }

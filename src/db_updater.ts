@@ -93,7 +93,7 @@ export class DbUpgrader {
     }
 
     /** This method just check's if database version is in sync with code version. */
-    check(callback) {
+    check(callback: qtopology.SimpleCallback) {
         let self = this;
 
         async.series(
@@ -119,7 +119,7 @@ export class DbUpgrader {
     }
 
     /** Sequentially executes upgrade files. */
-    run(callback) {
+    run(callback: qtopology.SimpleCallback) {
         let self = this;
 
         async.series(
@@ -159,9 +159,7 @@ export class DbUpgrader {
                                     console.log(err);
                                     return xxcallback(err);
                                 }
-                                self.log("Updating version in db to " + item.ver);
-                                let script2 = `update ${self.settings_table} set value = '${item.ver}' where name = '${self.version_record_key}'`;
-                                self.conn.query(script2, xxcallback);
+                                self.updateVersionInDb(item.ver, xxcallback);
                             });
                         },
                         xcallback);
@@ -173,7 +171,7 @@ export class DbUpgrader {
             ], callback);
     }
 
-    private getCurrentVersionFromDb(callback) {
+    private getCurrentVersionFromDb(callback: qtopology.SimpleCallback) {
         let self = this;
         self.log("Fetching version from database...");
         let script = "select value from " + self.settings_table + " where name = '" + self.version_record_key + "';";
@@ -187,7 +185,7 @@ export class DbUpgrader {
         });
     }
 
-    private checkFilesInScriptsDir(xcallback) {
+    private checkFilesInScriptsDir(xcallback: qtopology.SimpleCallback) {
         let self = this;
         self.log("Checking files in script directory: " + self.scripts_dir);
         let file_names = this.inner_glob.sync(path.join(self.scripts_dir, "v*.sql"));
@@ -204,5 +202,12 @@ export class DbUpgrader {
         xfiles.sort((a, b) => { return a.ver - b.ver; });
         self.files = xfiles;
         xcallback();
+    }
+
+    private updateVersionInDb(ver: number, callback: qtopology.SimpleCallback) {
+        let self = this;
+        self.log("Updating version in db to " + ver);
+        let script = `update ${self.settings_table} set value = '${ver}' where name = '${self.version_record_key}'`;
+        self.conn.query(script, callback);
     }
 }
