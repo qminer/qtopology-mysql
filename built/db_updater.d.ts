@@ -45,6 +45,8 @@ export declare class DbUpgrader {
     private inner_glob;
     private inner_fs;
     private log_prefix;
+    private curr_version;
+    private files;
     /** Simple constructor */
     constructor(options: DbUpgraderOptions);
     /** Internal logging utility method */
@@ -53,4 +55,6 @@ export declare class DbUpgrader {
     check(callback: any): void;
     /** Sequentially executes upgrade files. */
     run(callback: any): void;
+    private getCurrentVersionFromDb(callback);
+    private checkFilesInScriptsDir(xcallback);
 }

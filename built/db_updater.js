@@ -24,6 +24,8 @@ class DbUpgrader {
         this.inner_glob = options.glob || glob;
         this.inner_fs = options.fs || fs;
         this.log_prefix = options.log_prefix || "[qtopology-mysql DbUpgrader] ";
+        this.curr_version = -1;
+        this.files = [];
     }
     /** Internal logging utility method */
     log(s) {
@@ -32,47 +34,21 @@ class DbUpgrader {
     /** This method just check's if database version is in sync with code version. */
     check(callback) {
         let self = this;
-        let files = [];
-        let curr_version = -1;
         async.series([
             (xcallback) => {
-                self.log("Fetching version from database...");
-                let script = "select value from " + self.settings_table + " where name = '" + self.version_record_key + "';";
-                self.conn.query(script, function (err, rows) {
-                    if (err)
-                        return xcallback(err);
-                    if (rows.length > 0) {
-                        curr_version = rows[0].value;
-                    }
-                    self.log("Current version: " + curr_version);
-                    xcallback();
-                });
+                self.getCurrentVersionFromDb(xcallback);
             },
             (xcallback) => {
-                self.log("Checking files in script directory: " + self.scripts_dir);
-                let file_names = this.inner_glob.sync(path.join(self.scripts_dir, "v*.sql"));
-                let xfiles = file_names.map(x => {
-                    let r = new FileRec();
-                    r.file = x;
-                    r.file_short = path.basename(x);
-                    return r;
-                });
-                xfiles.forEach(x => {
-                    let tmp = path.basename(x.file);
-                    x.ver = +(tmp.replace("v", "").replace(".sql", ""));
-                });
-                xfiles.sort((a, b) => { return a.ver - b.ver; });
-                files = xfiles;
-                xcallback();
+                self.checkFilesInScriptsDir(xcallback);
             },
             (xcallback) => {
                 self.log("Finished.");
-                if (files.length == 0) {
+                if (self.files.length == 0) {
                     return xcallback(new Error("Directory with SQL version upgrades is empty."));
                 }
-                let code_version = files[files.length - 1].ver;
-                if (code_version != curr_version) {
-                    return xcallback(new Error(`Version mismatch in QTopology SQL: ${curr_version} in db, ${code_version}`));
+                let code_version = self.files[self.files.length - 1].ver;
+                if (code_version != self.curr_version) {
+                    return xcallback(new Error(`Version mismatch in QTopology SQL: ${self.curr_version} in db, ${code_version}`));
                 }
                 xcallback();
             }
@@ -81,8 +57,6 @@ class DbUpgrader {
     /** Sequentially executes upgrade files. */
     run(callback) {
         let self = this;
-        let files = [];
-        let curr_version = -1;
         async.series([
             (xcallback) => {
                 let file_name = "init.sql";
@@ -96,44 +70,20 @@ class DbUpgrader {
                 });
             },
             (xcallback) => {
-                self.log("Fetching files in script directory: " + self.scripts_dir);
-                let file_names = this.inner_glob.sync(path.join(self.scripts_dir, "v*.sql"));
-                let xfiles = file_names.map(x => {
-                    let r = new FileRec();
-                    r.file = x;
-                    r.file_short = path.basename(x);
-                    return r;
-                });
-                xfiles.forEach(x => {
-                    let tmp = path.basename(x.file);
-                    x.ver = +(tmp.replace("v", "").replace(".sql", ""));
-                });
-                xfiles.sort((a, b) => { return a.ver - b.ver; });
-                files = xfiles;
-                xcallback();
+                self.checkFilesInScriptsDir(xcallback);
             },
             (xcallback) => {
-                self.log("Fetching version from database...");
-                let script = "select value from " + self.settings_table + " where name = '" + self.version_record_key + "';";
-                self.conn.query(script, function (err, rows) {
-                    if (err)
-                        return xcallback(err);
-                    if (rows.length > 0) {
-                        curr_version = rows[0].value;
-                    }
-                    self.log("Current version: " + curr_version);
-                    xcallback();
-                });
+                self.getCurrentVersionFromDb(xcallback);
             },
             (xcallback) => {
                 self.log("Detecting applicable upgrade files...");
-                files = files.filter(x => x.ver > curr_version);
-                files = files.sort((a, b) => { return a.ver - b.ver; });
+                self.files = self.files.filter(x => x.ver > self.curr_version);
+                self.files = self.files.sort((a, b) => { return a.ver - b.ver; });
                 xcallback();
             },
             (xcallback) => {
-                self.log("Number of applicable upgrade files: " + files.length);
-                async.eachSeries(files, (item, xxcallback) => {
+                self.log("Number of applicable upgrade files: " + self.files.length);
+                async.eachSeries(self.files, (item, xxcallback) => {
                     self.log("Executing upgrade file: " + item.file_short);
                     let script = this.inner_fs.readFileSync(item.file, "utf8");
                     self.conn.query(script, (err) => {
@@ -152,6 +102,38 @@ class DbUpgrader {
                 xcallback();
             }
         ], callback);
+    }
+    getCurrentVersionFromDb(callback) {
+        let self = this;
+        self.log("Fetching version from database...");
+        let script = "select value from " + self.settings_table + " where name = '" + self.version_record_key + "';";
+        self.conn.query(script, (err, rows) => {
+            if (err)
+                return callback(err);
+            if (rows.length > 0) {
+                self.curr_version = rows[0].value;
+            }
+            self.log("Current version: " + self.curr_version);
+            callback();
+        });
+    }
+    checkFilesInScriptsDir(xcallback) {
+        let self = this;
+        self.log("Checking files in script directory: " + self.scripts_dir);
+        let file_names = this.inner_glob.sync(path.join(self.scripts_dir, "v*.sql"));
+        let xfiles = file_names.map(x => {
+            let r = new FileRec();
+            r.file = x;
+            r.file_short = path.basename(x);
+            return r;
+        });
+        xfiles.forEach(x => {
+            let tmp = path.basename(x.file);
+            x.ver = +(tmp.replace("v", "").replace(".sql", ""));
+        });
+        xfiles.sort((a, b) => { return a.ver - b.ver; });
+        self.files = xfiles;
+        xcallback();
     }
 }
 exports.DbUpgrader = DbUpgrader;
