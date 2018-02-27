@@ -30,6 +30,7 @@ export interface DbUpgraderOptions {
     conn: Connection;
     settings_table: string;
     version_record_key: string;
+    log_prefix?: string;
     glob?: Glob;
     fs?: Fs;
 }
@@ -43,6 +44,7 @@ export declare class DbUpgrader {
     private version_record_key;
     private inner_glob;
     private inner_fs;
+    private log_prefix;
     /** Simple constructor */
     constructor(options: DbUpgraderOptions);
     /** Internal logging utility method */

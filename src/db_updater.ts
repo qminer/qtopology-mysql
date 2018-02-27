@@ -52,6 +52,7 @@ export interface DbUpgraderOptions {
     conn: Connection;
     settings_table: string;
     version_record_key: string;
+    log_prefix?: string;
     glob?: Glob;
     fs?: Fs;
 }
@@ -67,6 +68,7 @@ export class DbUpgrader {
     private version_record_key: string;
     private inner_glob: Glob;
     private inner_fs: Fs;
+    private log_prefix: string;
 
     /** Simple constructor */
     constructor(options: DbUpgraderOptions) {
@@ -76,11 +78,12 @@ export class DbUpgrader {
         this.version_record_key = options.version_record_key || "dbver";
         this.inner_glob = options.glob || glob;
         this.inner_fs = options.fs || fs;
+        this.log_prefix = options.log_prefix || "[qtopology-mysql DbUpgrader] ";
     }
 
     /** Internal logging utility method */
     private log(s: string) {
-        qtopology.logger().debug("[qtopology-mysql DbUpgrader] " + s);
+        qtopology.logger().debug(this.log_prefix + s);
     }
 
     /** This method just check's if database version is in sync with code version. */
@@ -93,7 +96,7 @@ export class DbUpgrader {
             [
                 (xcallback) => {
                     self.log("Fetching version from database...");
-                    let script = "select name, value from " + self.settings_table + " where name = '" + self.version_record_key + "';";
+                    let script = "select value from " + self.settings_table + " where name = '" + self.version_record_key + "';";
                     self.conn.query(script, function (err, rows) {
                         if (err) return xcallback(err);
                         if (rows.length > 0) {
@@ -172,7 +175,7 @@ export class DbUpgrader {
                 },
                 (xcallback) => {
                     self.log("Fetching version from database...");
-                    let script = "select name, value from " + self.settings_table + " where name = '" + self.version_record_key + "';";
+                    let script = "select value from " + self.settings_table + " where name = '" + self.version_record_key + "';";
                     self.conn.query(script, function (err, rows) {
                         if (err) return xcallback(err);
                         if (rows.length > 0) {

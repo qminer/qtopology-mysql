@@ -35,7 +35,7 @@ describe('DB updater', function () {
             let mock_conn = {
                 query: (sql, cb) => {
                     switch (sql) {
-                        case `select name, value from ${settings_table} where name = '${version_record_key}';`:
+                        case `select value from ${settings_table} where name = '${version_record_key}';`:
                             return cb(null, []);
                         case `update ${settings_table} set value = '1' where name = '${version_record_key}'`:
                         case `update ${settings_table} set value = '2' where name = '${version_record_key}'`:
@@ -83,7 +83,7 @@ describe('DB updater', function () {
             let mock_conn = {
                 query: (sql, cb) => {
                     switch (sql) {
-                        case `select name, value from ${settings_table} where name = '${version_record_key}';`:
+                        case `select value from ${settings_table} where name = '${version_record_key}';`:
                             return cb(null, [{ name: "", value: "1"}]);
                         //case `update ${settings_table} set value = '1' where name = '${version_record_key}'`:
                         case `update ${settings_table} set value = '2' where name = '${version_record_key}'`:
@@ -131,7 +131,7 @@ describe('DB updater', function () {
             let mock_conn = {
                 query: (sql, cb) => {
                     switch (sql) {
-                        case `select name, value from ${settings_table} where name = '${version_record_key}';`:
+                        case `select value from ${settings_table} where name = '${version_record_key}';`:
                             return cb(null, [{ name: "", value: "2"}]);
                         //case `update ${settings_table} set value = '1' where name = '${version_record_key}'`:
                         // case `update ${settings_table} set value = '2' where name = '${version_record_key}'`:
@@ -170,7 +170,7 @@ describe('DB updater', function () {
             };
             let mock_conn = {
                 query: (sql, cb) => {
-                    assert.equal(sql, `select name, value from ${settings_table} where name = '${version_record_key}';`);
+                    assert.equal(sql, `select value from ${settings_table} where name = '${version_record_key}';`);
                     cb(null, []);
                 }
             }
@@ -196,7 +196,7 @@ describe('DB updater', function () {
             let curr_value = 2;
             let mock_conn = {
                 query: (sql, cb) => {
-                    assert.equal(sql, `select name, value from ${settings_table} where name = '${version_record_key}';`);
+                    assert.equal(sql, `select value from ${settings_table} where name = '${version_record_key}';`);
                     cb(new Error("Some error"));
                 }
             }
@@ -223,7 +223,7 @@ describe('DB updater', function () {
             let curr_value = 2;
             let mock_conn = {
                 query: (sql, cb) => {
-                    assert.equal(sql, `select name, value from ${settings_table} where name = '${version_record_key}';`);
+                    assert.equal(sql, `select value from ${settings_table} where name = '${version_record_key}';`);
                     cb(null, [{ value: curr_value }]);
                 }
             }
@@ -249,7 +249,7 @@ describe('DB updater', function () {
             let curr_value = 2;
             let mock_conn = {
                 query: (sql, cb) => {
-                    assert.equal(sql, `select name, value from ${settings_table} where name = '${version_record_key}';`);
+                    assert.equal(sql, `select value from ${settings_table} where name = '${version_record_key}';`);
                     cb(null, [{ value: curr_value }]);
                 }
             }
@@ -275,7 +275,7 @@ describe('DB updater', function () {
             let curr_value = 1;
             let mock_conn = {
                 query: (sql, cb) => {
-                    assert.equal(sql, `select name, value from ${settings_table} where name = '${version_record_key}';`);
+                    assert.equal(sql, `select value from ${settings_table} where name = '${version_record_key}';`);
                     cb(null, [{ value: curr_value }]);
                 }
             }
@@ -301,7 +301,7 @@ describe('DB updater', function () {
             let curr_value = 3;
             let mock_conn = {
                 query: (sql, cb) => {
-                    assert.equal(sql, `select name, value from ${settings_table} where name = '${version_record_key}';`);
+                    assert.equal(sql, `select value from ${settings_table} where name = '${version_record_key}';`);
                     cb(null, [{ value: curr_value }]);
                 }
             }
