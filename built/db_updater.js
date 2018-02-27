@@ -49,7 +49,7 @@ class DbUpgrader {
             },
             (xcallback) => {
                 self.log("Checking files in script directory: " + self.scripts_dir);
-                let file_names = this.inner_glob.sync(self.scripts_dir + "/v*.sql");
+                let file_names = this.inner_glob.sync(path.join(self.scripts_dir, "v*.sql"));
                 let xfiles = file_names.map(x => {
                     let r = new FileRec();
                     r.file = x;
@@ -81,7 +81,6 @@ class DbUpgrader {
     run(callback) {
         let self = this;
         let files = [];
-        let xfiles = [];
         let curr_version = -1;
         async.series([
             (xcallback) => {
@@ -97,8 +96,8 @@ class DbUpgrader {
             },
             (xcallback) => {
                 self.log("Fetching files in script directory: " + self.scripts_dir);
-                files = this.inner_glob.sync(self.scripts_dir + "/v*.sql");
-                let xfiles = files.map(x => {
+                let file_names = this.inner_glob.sync(path.join(self.scripts_dir, "v*.sql"));
+                let xfiles = file_names.map(x => {
                     let r = new FileRec();
                     r.file = x;
                     r.file_short = path.basename(x);
