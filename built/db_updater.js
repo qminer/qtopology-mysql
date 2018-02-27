@@ -29,8 +29,10 @@ class DbUpgrader {
         if (options.use_init_script != undefined) {
             this.use_init_script = options.use_init_script;
         }
-        this.sql_template_get = "select value from ${tab} where name = '${key}';";
-        this.sql_template_update = "update ${tab} set value = '${ver}' where name = '${key}';";
+        this.sql_template_get = options.sql_template_get ||
+            "select value from ${tab} where name = '${key}';";
+        this.sql_template_update = options.sql_template_update ||
+            "update ${tab} set value = '${ver}' where name = '${key}';";
         this.curr_version = -1;
         this.files = [];
     }

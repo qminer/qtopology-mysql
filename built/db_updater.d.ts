@@ -36,6 +36,8 @@ export interface DbUpgraderOptions {
     fs?: Fs;
     use_init_script?: boolean;
     init_script_name?: string;
+    sql_template_get?: string;
+    sql_template_update?: string;
 }
 /**
  * This class handles automatic upgrades of underlaying database.
