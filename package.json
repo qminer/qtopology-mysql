@@ -20,16 +20,16 @@
   ],
   "license": "ISC",
   "devDependencies": {
-    "@types/node": "7.0.12",
-    "@types/mysql": "0.0.33",
     "@types/async": "2.0.40",
     "@types/glob": "5.0.30",
-    "mocha": "^3.2.0"
+    "@types/mysql": "0.0.33",
+    "@types/node": "7.0.12",
+    "mocha": "^5.2.0"
   },
   "dependencies": {
     "async": "^1.5.2",
     "glob": "^7.1.1",
     "mysql": "^2.12.0",
-    "qtopology": "^2.0.5"
+    "qtopology": "^2.0.6"
   }
 }
