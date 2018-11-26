@@ -5,26 +5,26 @@
  * and has a `typeof` result of "object".
  */
 function isObjectLike(value) {
-    return !!value && typeof value == 'object';
+    return !!value && typeof value == "object";
 }
 
 /** `Object#toString` result references. */
-let objectTag = '[object Object]';
+const objectTag = "[object Object]";
 
 /** Used for built-in method references. */
-let objectProto = Object.prototype;
+const objectProto = Object.prototype;
 
 /** Used to resolve the decompiled source of functions. */
-let funcToString = Function.prototype.toString;
+const funcToString = Function.prototype.toString;
 
 /** Used to infer the `Object` constructor. */
-let objectCtorString = funcToString.call(Object);
+const objectCtorString = funcToString.call(Object);
 
 /**
  * Used to resolve the [`toStringTag`](http://ecma-international.org/ecma-262/6.0/#sec-object.prototype.tostring)
  * of values.
  */
-let objectToString = objectProto.toString;
+const objectToString = objectProto.toString;
 
 /**
  * Checks if `value` is a host object in IE < 9.
@@ -37,12 +37,13 @@ function isHostObject(value: any): boolean {
     // Many host objects are `Object` objects that can coerce to strings
     // despite having improperly defined `toString` methods.
     let result = false;
-    if (value != null && typeof value.toString != 'function') {
+    if (value != null && typeof value.toString != "function") {
         try {
             /*jshint -W018 */
-            result = !!(value + '');
+            result = !!(value + "");
             /*jshint +W018 */
         } catch (e) {
+            // no-op
         }
     }
     return result;
@@ -55,19 +56,19 @@ function isPlainObject(value: any): boolean {
     if (!isObjectLike(value) || objectToString.call(value) != objectTag || isHostObject(value)) {
         return false;
     }
-    let proto = Object.getPrototypeOf(value);
+    const proto = Object.getPrototypeOf(value);
     if (proto === null) {
         return true;
     }
-    let Ctor = proto.constructor;
-    return (typeof Ctor == 'function' && Ctor instanceof Ctor && funcToString.call(Ctor) == objectCtorString);
+    const ctor = proto.constructor;
+    return (typeof ctor == "function" && ctor instanceof ctor && funcToString.call(ctor) == objectCtorString);
 }
 
 /**
  * Utility method that escapes string for SQL.
  */
 function _escapeString(val: string): string {
-    val = val.replace(/[\0\n\r\b\t\\'\x1a]/g, function (s) {
+    val = val.replace(/[\0\n\r\b\t\\'\x1a]/g, s => {
         switch (s) {
             case "\0": return "\\0";
             case "\n": return "\\n";
@@ -93,7 +94,7 @@ function format(value: any): string {
     if (value instanceof Date) {
         return "FROM_UNIXTIME(" + value.getTime() + " / 1000)";
     }
-    if (typeof value == 'string') {
+    if (typeof value == "string") {
         return "'" + _escapeString(value) + "'";
     }
     return value;
@@ -103,8 +104,8 @@ function format(value: any): string {
  * This function formats given array of values into proper SQL.
  * @param value {array} - array of value
  */
-function formatList(value: Array<any>): string {
-    let res = value.map(function (x) { return format(x); });
+function formatList(value: any[]): string {
+    const res = value.map(x => format(x));
     return "(" + res.join(",") + ")";
 }
 
@@ -114,46 +115,46 @@ function formatList(value: Array<any>): string {
  * @param value {object} - condition value
  */
 function processSingle(key: string, value: any): string {
-    let comparatorMap = {
-        $eq: '=',
-        $ne: '<>',
-        $gte: '>=',
-        $gt: '>',
-        $lte: '<=',
-        $lt: '<',
-        $not: 'is not',
-        $is: 'is',
-        $like: 'like',
-        $notLike: 'not like',
-        $between: 'between',
-        $notBetween: 'not between'
+    const comparatorMap = {
+        $between: "between",
+        $eq: "=",
+        $gt: ">",
+        $gte: ">=",
+        $is: "is",
+        $like: "like",
+        $lt: "<",
+        $lte: "<=",
+        $ne: "<>",
+        $not: "is not",
+        $notBetween: "not between",
+        $notLike: "not like"
     };
 
     if (key === undefined && Array.isArray(value)) {
-        key = '$and';
+        key = "$and";
     }
 
-    if (key === '$plain') {
+    if (key === "$plain") {
         return value;
-    } else if (key === '$or' || key === '$and' || key === '$not') {
+    } else if (key === "$or" || key === "$and" || key === "$not") {
         // OR/AND/NOT grouping logic
-        let binding = (key === '$or') ? ' or ' : ' and ';
-        let outerBinding = '';
-        if (key === '$not') outerBinding = 'not ';
+        const binding = (key === "$or") ? " or " : " and ";
+        let outerBinding = "";
+        if (key === "$not") { outerBinding = "not "; }
 
         if (Array.isArray(value)) {
-            value = value.map(function (x) {
-                let itemQuery = processObj(x, ' and ');
+            value = value.map(x => {
+                let itemQuery = processObj(x, " and ");
                 if ((Array.isArray(x) || isPlainObject(x)) && x.length > 1) {
-                    itemQuery = '(' + itemQuery + ')';
+                    itemQuery = "(" + itemQuery + ")";
                 }
                 return itemQuery;
-            }).filter(function (x) { return x && x.length; });
+            }).filter(x => x && x.length);
 
-            return value.length ? outerBinding + '(' + value.join(binding) + ')' : undefined;
+            return value.length ? outerBinding + "(" + value.join(binding) + ")" : undefined;
         } else {
             value = processObj(value, binding);
-            return value ? outerBinding + '(' + value + ')' : undefined;
+            return value ? outerBinding + "(" + value + ")" : undefined;
         }
     } else {
         if (value === undefined || value === null) {
@@ -161,14 +162,14 @@ function processSingle(key: string, value: any): string {
         }
         if (isPlainObject(value)) {
             let sub_items = [];
-            for (let i in value) {
+            for (const i in value) {
                 if (i == "$in") {
                     sub_items.push(key + " in " + formatList(value[i]));
                 } else {
                     sub_items.push(key + " " + comparatorMap[i] + " " + format(value[i]));
                 }
             }
-            sub_items = sub_items.filter(function (x) { return x && x.length; });
+            sub_items = sub_items.filter(x => x && x.length);
             if (sub_items.length > 0) {
                 return sub_items.join(" and ");
             }
@@ -185,31 +186,31 @@ function processSingle(key: string, value: any): string {
  * @param operator {string} - operator that should combine the detected conditions. Optional, default is AND.
  */
 function processObj(obj: any, operator: string): string {
-    let is_array = Array.isArray(obj);
+    const is_array = Array.isArray(obj);
     if (
         (is_array && obj.length === 0) ||
-        //(_.isPlainObject(obj) && _.isEmpty(obj)) ||
+        // (_.isPlainObject(obj) && _.isEmpty(obj)) ||
         obj === null ||
         obj === undefined
     ) {
         // NO OP
-        return '';
+        return "";
     }
 
     let items = [];
-    let binding = operator || 'and';
-    if (binding.substr(0, 1) !== ' ') binding = ' ' + binding + ' ';
+    let binding = operator || "and";
+    if (binding.substr(0, 1) !== " ") { binding = " " + binding + " "; }
 
     if (is_array) {
         items.push(processSingle(undefined, obj));
     } else {
-        for (let key in obj) {
+        for (const key in obj) {
             items.push(processSingle(key, obj[key]));
         }
     }
 
     // remove empty conditions
-    items = items.filter(function (x) { return x && x.length; })
+    items = items.filter(x => x && x.length);
     if (items.length == 0) {
         return "";
     }
@@ -222,11 +223,11 @@ function processObj(obj: any, operator: string): string {
  * @param q {object} - complex query object
  */
 export function mapQuery(q: any): string {
-    let query = processObj(q, null);
+    const query = processObj(q, null);
     if (query && query.length) {
-        return 'where ' + query;
+        return "where " + query;
     }
-    return '';
+    return "";
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -238,8 +239,8 @@ export function mapQuery(q: any): string {
  * @param record {object} - record to be inspected
  */
 export function createListOfFields(record: any): string {
-    let fields = [];
-    for (let i in record) {
+    const fields = [];
+    for (const i in record) {
         fields.push(i);
     }
     return fields.join(", ");
@@ -252,7 +253,7 @@ export function createListOfFields(record: any): string {
  */
 export function createListOfFieldValues(record: any): string {
     let str = "";
-    for (let i in record) {
+    for (const i in record) {
         str += i + "=values(" + i + "), ";
     }
     return str.substring(0, str.length - 2);
@@ -260,7 +261,7 @@ export function createListOfFieldValues(record: any): string {
 
 export function createListOfSetValues(record: any): string {
     let str = "";
-    for (let i in record) {
+    for (const i in record) {
         str += i + "=" + format(record[i]) + ",";
     }
     return str.substring(0, str.length - 1);
@@ -272,8 +273,8 @@ export function createListOfSetValues(record: any): string {
  * @param record {object} - record to be inspected
  */
 export function createListOfFieldsRaw(record: any): string[] {
-    let fields = [];
-    for (let i in record) {
+    const fields = [];
+    for (const i in record) {
         fields.push(i);
     }
     return fields;
@@ -286,9 +287,9 @@ export function createListOfFieldsRaw(record: any): string[] {
  * @param field_list {array} - list of field names
  */
 export function mapObjectToArrayOfFields(record: any, field_list: string[]) {
-    let result = [];
-    for (let i in field_list) {
-        result.push(record[field_list[i]]);
+    const result = [];
+    for (const field of field_list) {
+        result.push(record[field]);
     }
     return result;
 }
@@ -301,12 +302,12 @@ export function mapObjectToArrayOfFields(record: any, field_list: string[]) {
  * @param table {string} - name of the table to insert into
  */
 export function createInsert(record: any, table: string): string {
-    let vals_a = [];
-    for (let i in record) {
-        vals_a.push(format(record[i]));
+    const vals_a = [];
+    for (const field of record) {
+        vals_a.push(format(field));
     }
-    let vals = vals_a.join(", ");
-    let sql = `insert into ${table}(${createListOfFields(record)}) values (${vals})`;
+    const vals = vals_a.join(", ");
+    const sql = `insert into ${table}(${createListOfFields(record)}) values (${vals})`;
     return sql.trim() + ";";
 }
 
@@ -317,12 +318,16 @@ export function createInsert(record: any, table: string): string {
  * @param field {string} - name of the field that is to de used to determine existing record
  */
 export function createUpsert(record: any, table: string, field: string): string {
-    let vals_a = [];
-    for (let i in record) {
-        vals_a.push(format(record[i]));
+    const vals_a = [];
+    for (const item of record) {
+        vals_a.push(format(item));
     }
-    let vals = vals_a.join(", ");
-    let sql = "insert into " + table + "(" + createListOfFields(record) + ") select " + vals + " from dual where not exists (select 1 from " + table + " where " + field + " = " + format(record[field]) + "); update " + table + " set " + createListOfSetValues(record) + " where " + field + " = " + format(record[field]) + ";";
+    const vals = vals_a.join(", ");
+    const sql =
+        "insert into " + table + "(" + createListOfFields(record) + ") select " + vals +
+        " from dual where not exists (select 1 from " + table +
+        " where " + field + " = " + format(record[field]) + "); update " + table +
+        " set " + createListOfSetValues(record) + " where " + field + " = " + format(record[field]) + ";";
     return sql;
 }
 
@@ -333,21 +338,21 @@ export function createUpsert(record: any, table: string, field: string): string 
  * @param query {object} - query to find affected records.
  */
 export function createUpdate(record: any, table: string, query: any): string {
-    let vals_a = [];
-    for (let i in record) {
+    const vals_a = [];
+    for (const i in record) {
         if (i === "id" && !query) {
             continue;
         }
         vals_a.push(i + " = " + format(record[i]));
     }
-    let vals = vals_a.join(", ");
+    const vals = vals_a.join(", ");
     let q_string = "";
     if (query) {
         q_string = mapQuery(query) + ";";
     } else {
         q_string = "where id = " + format(record.id) + ";";
     }
-    let sql = `update ${table} set ${vals} ${q_string}`;
+    const sql = `update ${table} set ${vals} ${q_string}`;
     return sql;
 }
 
@@ -357,8 +362,8 @@ export function createUpdate(record: any, table: string, query: any): string {
  * @param query {object} - query to find affected records.
  */
 export function createDelete(table: string, query: any): string {
-    let q_string = mapQuery(query);
-    let sql = `delete from ${table} ${q_string}`;
+    const q_string = mapQuery(query);
+    const sql = `delete from ${table} ${q_string}`;
     return sql.trim() + ";";
 }
 
@@ -371,11 +376,11 @@ export function createDelete(table: string, query: any): string {
  * @param limit {number} - optional nukmber of records to retrieve
  */
 export function createSelect(fields: string[], table: string, query: any, order_by?: string[], limit?: number): string {
-    let q_string = mapQuery(query);
-    let fields_s = fields.join(", ");
-    let order_by_s = (order_by ? "order by " + order_by.join(", ") : "");
-    let limit_s = (limit ? "limit " + limit : "");
-    let sql = `select ${fields_s} from ${table} ${q_string} ${order_by_s} ${limit_s}`;
+    const q_string = mapQuery(query);
+    const fields_s = fields.join(", ");
+    const order_by_s = (order_by ? "order by " + order_by.join(", ") : "");
+    const limit_s = (limit ? "limit " + limit : "");
+    const sql = `select ${fields_s} from ${table} ${q_string} ${order_by_s} ${limit_s}`;
     return sql.trim() + ";";
 }
 
