@@ -303,8 +303,8 @@ export function mapObjectToArrayOfFields(record: any, field_list: string[]) {
  */
 export function createInsert(record: any, table: string): string {
     const vals_a = [];
-    for (const field of record) {
-        vals_a.push(format(field));
+    for (const field of Object.keys(record)) {
+        vals_a.push(format(record[field]));
     }
     const vals = vals_a.join(", ");
     const sql = `insert into ${table}(${createListOfFields(record)}) values (${vals})`;
