@@ -4,7 +4,7 @@ const async = require("async");
 const fs = require("fs");
 const path = require("path");
 const glob = require("glob");
-const qtopology = require("qtopology");
+const qtopology = require("./qtopology");
 /////////////////////////////////////////////////////////////////////////
 /**
  * Internal class for storing data about upgrade-script file.
@@ -36,26 +36,22 @@ class DbUpgrader {
         this.curr_version = -1;
         this.files = [];
     }
-    /** Internal logging utility method */
-    log(s) {
-        qtopology.logger().debug(this.log_prefix + s);
-    }
     /** This method just checks if database version is in sync with code version. */
     check(callback) {
-        let self = this;
+        const self = this;
         async.series([
-            (xcallback) => {
+            xcallback => {
                 self.getCurrentVersionFromDb(xcallback);
             },
-            (xcallback) => {
+            xcallback => {
                 self.checkFilesInScriptsDir(xcallback);
             },
-            (xcallback) => {
+            xcallback => {
                 self.log("Finished.");
                 if (self.files.length == 0) {
                     return xcallback(new Error("Directory with SQL version upgrades is empty."));
                 }
-                let code_version = self.files[self.files.length - 1].ver;
+                const code_version = self.files[self.files.length - 1].ver;
                 if (code_version != self.curr_version) {
                     return xcallback(new Error(`Version mismatch in QTopology SQL: ${self.curr_version} in db, ${code_version}`));
                 }
@@ -65,26 +61,26 @@ class DbUpgrader {
     }
     /** Sequentially executes upgrade files. */
     run(callback) {
-        let self = this;
+        const self = this;
         async.series([
-            (xcallback) => {
+            xcallback => {
                 self.runInitScript(xcallback);
             },
-            (xcallback) => {
+            xcallback => {
                 self.checkFilesInScriptsDir(xcallback);
             },
-            (xcallback) => {
+            xcallback => {
                 self.getCurrentVersionFromDb(xcallback);
             },
-            (xcallback) => {
+            xcallback => {
                 self.log("Detecting applicable upgrade files...");
                 self.files = self.files.filter(x => x.ver > self.curr_version);
-                self.files = self.files.sort((a, b) => { return a.ver - b.ver; });
+                self.files = self.files.sort((a, b) => a.ver - b.ver);
                 self.log("Number of applicable upgrade files: " + self.files.length);
                 async.eachSeries(self.files, (item, xxcallback) => {
                     self.log("Executing upgrade file: " + item.file_short);
-                    let script = this.inner_fs.readFileSync(item.file, "utf8");
-                    self.conn.query(script, (err) => {
+                    const script = this.inner_fs.readFileSync(item.file, "utf8");
+                    self.conn.query(script, err => {
                         if (err) {
                             console.log(err);
                             return xxcallback(err);
@@ -92,32 +88,36 @@ class DbUpgrader {
                         self.updateVersionInDb(item.ver, xxcallback);
                     });
                 }, xcallback);
-            },
-            (xcallback) => {
+            }, xcallback => {
                 self.log("Finished.");
                 xcallback();
             }
         ], callback);
     }
+    /** Internal logging utility method */
+    log(s) {
+        qtopology.logger().debug(this.log_prefix + s);
+    }
     runInitScript(callback) {
-        let self = this;
+        const self = this;
         if (!self.use_init_script) {
             return callback();
         }
         self.log("Executing upgrade file: " + self.init_script_name);
-        let fname = path.join(self.scripts_dir, self.init_script_name);
-        let script = this.inner_fs.readFileSync(fname, "utf8");
+        const fname = path.join(self.scripts_dir, self.init_script_name);
+        const script = this.inner_fs.readFileSync(fname, "utf8");
         self.conn.query(script, callback);
     }
     getCurrentVersionFromDb(callback) {
-        let self = this;
+        const self = this;
         self.log("Fetching version from database...");
-        let script = self.sql_template_get
+        const script = self.sql_template_get
             .replace("${tab}", self.settings_table)
             .replace("${key}", self.version_record_key);
         self.conn.query(script, (err, rows) => {
-            if (err)
+            if (err) {
                 return callback(err);
+            }
             if (rows.length > 0) {
                 self.curr_version = rows[0].value;
             }
@@ -126,27 +126,27 @@ class DbUpgrader {
         });
     }
     checkFilesInScriptsDir(xcallback) {
-        let self = this;
+        const self = this;
         self.log("Checking files in script directory: " + self.scripts_dir);
-        let file_names = this.inner_glob.sync(path.join(self.scripts_dir, "v*.sql"));
-        let xfiles = file_names.map(x => {
-            let r = new FileRec();
+        const file_names = this.inner_glob.sync(path.join(self.scripts_dir, "v*.sql"));
+        const xfiles = file_names.map(x => {
+            const r = new FileRec();
             r.file = x;
             r.file_short = path.basename(x);
             return r;
         });
         xfiles.forEach(x => {
-            let tmp = path.basename(x.file);
+            const tmp = path.basename(x.file);
             x.ver = +(tmp.replace("v", "").replace(".sql", ""));
         });
-        xfiles.sort((a, b) => { return a.ver - b.ver; });
+        xfiles.sort((a, b) => a.ver - b.ver);
         self.files = xfiles;
         xcallback();
     }
     updateVersionInDb(ver, callback) {
-        let self = this;
+        const self = this;
         self.log("Updating version in db to " + ver);
-        let script = self.sql_template_update
+        const script = self.sql_template_update
             .replace("${ver}", "" + ver)
             .replace("${tab}", self.settings_table)
             .replace("${key}", self.version_record_key);
