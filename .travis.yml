@@ -4,11 +4,17 @@ language: node_js
 
 node_js:
   - 6
+  - 8
+  - 10
 
+before_install:
+  - npm install -g typescript@2.9.2
+  
 install:
   - npm install
 
 script:
+  - npm run build
   - npm install -g mocha
   - npm test
 
