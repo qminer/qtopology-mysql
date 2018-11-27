@@ -1,39 +1,37 @@
-import * as qtopology from "qtopology";
+import * as qtopology from "./qtopology";
 /**
  * Simple callback.
  */
-export interface SimpleResultCallback<T> {
-    (error?: Error, data?: T): void;
-}
+export declare type SimpleResultCallback<T> = (error?: Error, data?: T) => void;
 /**
  * Database connection.
  */
-export interface Connection {
+export interface IConnection {
     query(script: string, callback: SimpleResultCallback<any[]>): any;
 }
 /**
  * Simple callback.
  */
-export interface Glob {
+export interface IGlob {
     sync(path: string): string[];
 }
 /**
  * Simple callback.
  */
-export interface Fs {
+export interface IFs {
     readFileSync(name: string, encoding: string): string;
 }
 /**
  * Options for automatic DB upgrade
  */
-export interface DbUpgraderOptions {
+export interface IDbUpgraderOptions {
     scripts_dir: string;
-    conn: Connection;
+    conn: IConnection;
     settings_table: string;
     version_record_key: string;
     log_prefix?: string;
-    glob?: Glob;
-    fs?: Fs;
+    glob?: IGlob;
+    fs?: IFs;
     use_init_script?: boolean;
     init_script_name?: string;
     sql_template_get?: string;
@@ -57,15 +55,15 @@ export declare class DbUpgrader {
     private curr_version;
     private files;
     /** Simple constructor */
-    constructor(options: DbUpgraderOptions);
-    /** Internal logging utility method */
-    private log(s);
+    constructor(options: IDbUpgraderOptions);
     /** This method just checks if database version is in sync with code version. */
     check(callback: qtopology.SimpleCallback): void;
     /** Sequentially executes upgrade files. */
     run(callback: qtopology.SimpleCallback): void;
-    private runInitScript(callback);
-    private getCurrentVersionFromDb(callback);
-    private checkFilesInScriptsDir(xcallback);
-    private updateVersionInDb(ver, callback);
+    /** Internal logging utility method */
+    private log;
+    private runInitScript;
+    private getCurrentVersionFromDb;
+    private checkFilesInScriptsDir;
+    private updateVersionInDb;
 }
