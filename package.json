@@ -9,7 +9,7 @@
     "node.js"
   ],
   "scripts": {
-    "build": "tsc",
+    "build": "npm run format && npm run lint && tsc",
     "test": "mocha tests --recursive",
     "format": "./node_modules/.bin/tsfmt -r",
     "lint": "./node_modules/.bin/tslint --project ."

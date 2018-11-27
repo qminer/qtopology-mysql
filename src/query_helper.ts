@@ -204,7 +204,7 @@ function processObj(obj: any, operator: string): string {
     if (is_array) {
         items.push(processSingle(undefined, obj));
     } else {
-        for (const key in obj) {
+        for (const key of Object.keys(obj)) {
             items.push(processSingle(key, obj[key]));
         }
     }
@@ -240,7 +240,7 @@ export function mapQuery(q: any): string {
  */
 export function createListOfFields(record: any): string {
     const fields = [];
-    for (const i in record) {
+    for (const i of Object.keys(record)) {
         fields.push(i);
     }
     return fields.join(", ");
@@ -253,7 +253,7 @@ export function createListOfFields(record: any): string {
  */
 export function createListOfFieldValues(record: any): string {
     let str = "";
-    for (const i in record) {
+    for (const i of Object.keys(record)) {
         str += i + "=values(" + i + "), ";
     }
     return str.substring(0, str.length - 2);
@@ -261,7 +261,7 @@ export function createListOfFieldValues(record: any): string {
 
 export function createListOfSetValues(record: any): string {
     let str = "";
-    for (const i in record) {
+    for (const i of Object.keys(record)) {
         str += i + "=" + format(record[i]) + ",";
     }
     return str.substring(0, str.length - 1);
@@ -274,7 +274,7 @@ export function createListOfSetValues(record: any): string {
  */
 export function createListOfFieldsRaw(record: any): string[] {
     const fields = [];
-    for (const i in record) {
+    for (const i of Object.keys(record)) {
         fields.push(i);
     }
     return fields;
