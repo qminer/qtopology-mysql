@@ -179,11 +179,11 @@ export class MySqlStorage implements qtopology.ICoordinationStorage {
             for (const rec of data) {
                 rec.last_ping = rec.last_ping || new Date();
                 res.push({
-                    name: rec.name,
-                    status: rec.status,
-                    lstatus: rec.lstatus,
                     last_ping: rec.last_ping.getTime(),
-                    last_ping_d: rec.last_ping
+                    last_ping_d: rec.last_ping,
+                    lstatus: rec.lstatus,
+                    name: rec.name,
+                    status: rec.status
                 });
             }
             callback(null, res);
@@ -223,17 +223,17 @@ export class MySqlStorage implements qtopology.ICoordinationStorage {
             const hit = data[0];
             const config = JSON.parse(qtopology.stripJsonComments(hit.config));
             callback(null, {
+                config,
                 enabled: hit.enabled,
-                status: hit.status,
-                uuid: hit.uuid,
                 error: hit.error,
-                weight: hit.weight,
-                worker_affinity: hit.worker_affinity,
-                worker: hit.worker,
                 last_ping: hit.last_ping.getDate(),
                 last_ping_d: hit.last_ping,
-                config,
-                pid: hit.pid
+                pid: hit.pid,
+                status: hit.status,
+                uuid: hit.uuid,
+                weight: hit.weight,
+                worker: hit.worker,
+                worker_affinity: hit.worker_affinity
             });
         });
     }
@@ -267,9 +267,9 @@ export class MySqlStorage implements qtopology.ICoordinationStorage {
     }
     public assignTopology(uuid: string, name: string, callback: qtopology.SimpleCallback) {
         let sql = qh.createUpdate({
-            worker: name,
             last_ping: new Date(),
-            status: qtopology.CONSTS.TopologyStatus.waiting
+            status: qtopology.CONSTS.TopologyStatus.waiting,
+            worker: name
         }, table_names.qtopology_topology, { uuid });
         sql += "call qtopology_sp_add_topology_history(?);";
         this.query(sql, [uuid], callback);
@@ -347,11 +347,11 @@ export class MySqlStorage implements qtopology.ICoordinationStorage {
     ) {
         const sql = qh.createInsert(
             {
-                worker,
                 cmd,
                 content: JSON.stringify(content),
                 created: new Date(),
-                valid_until: new Date(Date.now() + valid_msec)
+                valid_until: new Date(Date.now() + valid_msec),
+                worker
             },
             table_names.qtopology_message);
         this.query(sql, null, callback);
@@ -368,10 +368,10 @@ export class MySqlStorage implements qtopology.ICoordinationStorage {
             if (err) { return callback(err); }
             const res = data.map(x => {
                 return {
-                    name: x.worker,
                     cmd: x.cmd,
-                    data: JSON.parse(x.content),
                     created: x.created,
+                    data: JSON.parse(x.content),
+                    name: x.worker,
                     valid_until: x.valid_until
                 };
             });
@@ -438,14 +438,14 @@ export class MySqlStorage implements qtopology.ICoordinationStorage {
                 res.push({
                     enabled: x.enabled,
                     error: x.error,
+                    last_ping: x.last_ping.getDate(),
+                    last_ping_d: x.last_ping,
+                    pid: x.pid,
                     status: x.status,
                     ts: x.ts,
                     uuid: x.uuid,
                     weight: x.weight,
                     worker: x.worker,
-                    pid: x.pid,
-                    last_ping: x.last_ping.getDate(),
-                    last_ping_d: x.last_ping,
                     worker_affinity: x.worker_affinity
                 });
             });
@@ -465,8 +465,8 @@ export class MySqlStorage implements qtopology.ICoordinationStorage {
                 res.push({
                     lstatus: x.lstatus,
                     name: x.name,
-                    status: x.status,
                     pid: x.pid,
+                    status: x.status,
                     ts: x.ts
                 });
             });
@@ -546,14 +546,14 @@ export class MySqlStorage implements qtopology.ICoordinationStorage {
             const res = [];
             for (const rec of data) {
                 res.push({
-                    uuid: rec.uuid,
-                    status: rec.status,
-                    worker: rec.worker,
-                    weight: rec.weight,
                     enabled: !!rec.enabled,
                     error: rec.error,
-                    pid: rec.pid,
                     last_ping: rec.last_ping,
+                    pid: rec.pid,
+                    status: rec.status,
+                    uuid: rec.uuid,
+                    weight: rec.weight,
+                    worker: rec.worker,
                     worker_affinity: (rec.worker_affinity || "").split(",").filter(x => x.length > 0)
                 });
             }
@@ -566,8 +566,10 @@ export class MySqlStorage implements qtopology.ICoordinationStorage {
         self.getTopologyInfo(uuid, (err, data) => {
             if (err) { return callback(err); }
             if (!data.worker) { return callback(); }
-            self.disableTopology(uuid, err => {
-                if (err) { return callback(err); }
+            self.disableTopology(uuid, err_inner => {
+                if (err_inner) {
+                    return callback(err_inner);
+                }
                 self.sendMessageToWorker(
                     data.worker,
                     (do_kill ?
