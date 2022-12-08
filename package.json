@@ -27,7 +27,7 @@
     "@types/glob": "5.0.30",
     "@types/mysql": "0.0.33",
     "@types/node": "7.0.12",
-    "mocha": "^7.1.0",
+    "mocha": "^10.1.0",
     "tslint": "^5.11.0",
     "typescript": "^3.1.6",
     "typescript-formatter": "^7.2.2"
